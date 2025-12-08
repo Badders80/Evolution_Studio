@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <title>Evolution Stables | Report</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #ffffff;
+      color: #000000;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      position: relative;
+      overflow-y: auto;
+    }
+    .page-container {
+      max-width: 210mm;
+      width: 100%;
+      margin: 0 auto;
+      height: 100%;
+      padding: 15mm 20mm;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12mm;
+      padding-bottom: 5mm;
+      border-bottom: 2px solid #000000;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .brand-name {
+      font-family: 'Inter', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      color: #000000;
+      line-height: 1;
+    }
+    .template-type {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #000000;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .content-layout {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 10mm;
+      margin-bottom: 8mm;
+      align-items: flex-start;
+    }
+    .main-content {
+      grid-column: 1 / 2;
+      min-width: 0;
+    }
+    .quote-sidebar {
+      background: #f8f8f8;
+      padding: 32px 28px;
+      border-left: 3px solid #000000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      min-height: 300px;
+    }
+    .quote-sidebar blockquote {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-style: italic;
+      line-height: 1.9;
+      color: #000000;
+      margin: 0;
+      font-weight: 600;
+      text-align: left;
+    }
+    .quote-sidebar cite {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-style: normal;
+      color: #666666;
+      font-weight: 500;
+      text-align: right;
+      align-self: stretch;
+    }
+    .headline {
+      font-family: 'Playfair Display', serif;
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 8mm;
+      color: #000000;
+      letter-spacing: -1px;
+      grid-column: 1 / -1;
+    }
+    .subheadline {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 6mm;
+      color: #333333;
+      font-style: italic;
+    }
+    .content {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      font-weight: 400;
+    }
+    .content p {
+      margin-bottom: 1em;
+      break-inside: avoid;
+    }
+    .visual-section {
+      width: 100%;
+      background: #f4f4f4;
+      border: 1px solid #e0e0e0;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 28px;
+      align-items: center;
+      margin: 6mm 0;
+      min-height: 80mm;
+      padding: 18px 24px;
+    }
+    .visual-media {
+      width: 100%;
+      max-width: 100%;
+    }
+    .visual-media-inner {
+      position: relative;
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      aspect-ratio: 16 / 9;
+      background: #e4e4e4;
+      overflow: hidden;
+      border-radius: 4px;
+    }
+    .visual-media-inner iframe,
+    .visual-media-inner img {
+      width: 100%;
+      height: 100%;
+      border: none;
+      object-fit: cover;
+      display: block;
+    }
+    .visual-quote {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-style: italic;
+      line-height: 1.6;
+      color: #111111;
+    }
+    .visual-quote-name {
+      margin-top: 18px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: #444444;
+      text-align: right;
+    }
+    .sidebar-video {
+      width: 100%;
+      margin-bottom: 24px;
+    }
+    .video-thumbnail {
+      position: relative;
+      cursor: pointer;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+      /* slightly inset from text width */
+      max-width: 96%;
+      margin: 0 auto;
+      aspect-ratio: 16 / 9;
+      background: #f2f2f2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .video-thumbnail:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+    }
+    .video-thumbnail iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      pointer-events: none;
+    }
+    .play-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    .video-thumbnail:hover .play-overlay {
+      background: rgba(0, 0, 0, 0.8);
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+    .play-overlay svg {
+      width: 24px;
+      height: 24px;
+      margin-left: 3px;
+    }
+    .video-modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      animation: fadeIn 0.3s ease;
+    }
+    .modal-content {
+      position: relative;
+      margin: 5% auto;
+      width: 90%;
+      max-width: 1200px;
+      height: 70vh;
+    }
+    .modal-content iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 8px;
+    }
+    .close-btn {
+      position: absolute;
+      top: -50px;
+      right: 0;
+      color: #ffffff;
+      font-size: 40px;
+      font-weight: 300;
+      cursor: pointer;
+      transition: transform 0.2s;
+      line-height: 1;
+    }
+    .close-btn:hover {
+      transform: scale(1.2);
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    footer {
+      margin-top: auto;
+      padding-top: 8mm;
+      border-top: 2px solid #000000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .footer-hero {
+      text-align: center;
+      padding: 15px 0;
+    }
+    .footer-hero h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: #000000;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.5px;
+    }
+    .footer-hero p {
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      color: #666666;
+      margin: 0;
+      font-weight: 400;
+    }
+    .footer-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid #e0e0e0;
+    }
+    .footer-legal {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 8px;
+      color: #666666;
+    }
+    .footer-legal a {
+      color: #666666;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-legal a:hover {
+      color: #000000;
+    }
+    .footer-social {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 8px;
+      color: #666666;
+    }
+
+    /* Responsive layout for tablets and mobile */
+    @media (max-width: 900px) {
+      .page-container {
+        padding: 12mm 10mm;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .headline {
+        font-size: 40px;
+      }
+      .subheadline {
+        font-size: 20px;
+      }
+      .content-layout {
+        grid-template-columns: 1fr;
+        gap: 6mm;
+      }
+      .main-content {
+        grid-column: 1 / -1;
+      }
+      .quote-sidebar {
+        border-left-width: 2px;
+        padding: 24px 20px;
+        min-height: auto;
+      }
+      .visual-section {
+        grid-template-columns: 1fr;
+        gap: 18px;
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .page-container {
+        padding: 10mm 6mm;
+      }
+      .headline {
+        font-size: 32px;
+        line-height: 1.15;
+      }
+      .subheadline {
+        font-size: 18px;
+      }
+      .content {
+        font-size: 10px;
+      }
+      .quote-sidebar blockquote {
+        font-size: 18px;
+      }
+      .video-thumbnail {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <header>
+      <div class="header-left">
+        <div class="brand-name">Evolution Stables</div>
+      </div>
+      <div class="template-type">{{ update_type }}</div>
+    </header>
+
+    <main>
+      <div class="content-layout">
+        <div class="main-content">
+          <h1 class="headline">{{ heading or 'Investor Update' }}</h1>
+          {% if subheading %}
+            <div class="subheadline">{{ subheading }}</div>
+          {% endif %}
+          <div class="content">
+            {% for paragraph in body_paragraphs %}
+              <p>{{ paragraph }}</p>
+            {% endfor %}
+          </div>
+        </div>
+        <aside class="quote-sidebar">
+          {% if links and links[0].url %}
+            {% set link_url = links[0].url %}
+            {% if 'youtube.com' in link_url or 'youtu.be' in link_url %}
+              {% set video_id = link_url.split('/')[-1].split('?')[0] %}
+              {% set embed_url = 'https://www.youtube.com/embed/' ~ video_id %}
+            {% elif 'vimeo.com' in link_url %}
+              {% set video_id = link_url.split('/')[-1] %}
+              {% set embed_url = 'https://player.vimeo.com/video/' ~ video_id %}
+            {% elif 'canva.com' in link_url %}
+              {% set embed_url = link_url.replace('/watch?', '/watch?embed&') %}
+            {% else %}
+              {% set embed_url = link_url %}
+            {% endif %}
+            <div class="sidebar-video">
+              <div class="video-thumbnail" onclick="openVideoModal()">
+                <iframe src="{{ embed_url }}" allowfullscreen></iframe>
+                <div class="play-overlay">
+                  <svg viewBox="0 0 24 24" fill="white">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          {% if quotes and quotes[0] %}
+            <blockquote>“{{ quotes[0].text }}”</blockquote>
+            {% if quotes[0].name %}
+              <cite>— {{ quotes[0].name }}</cite>
+            {% endif %}
+          {% else %}
+            <blockquote>“Add a key trainer or jockey quote to highlight the story.”</blockquote>
+          {% endif %}
+        </aside>
+      </div>
+
+      <div class="visual-section">
+        <div class="visual-media">
+          <div class="visual-media-inner">
+            {% if links and links|length > 1 and links[1].url %}
+              {% set link2_url = links[1].url %}
+              {% if 'youtube.com' in link2_url or 'youtu.be' in link2_url %}
+                {% set video2_id = link2_url.split('/')[-1].split('?')[0] %}
+                {% set bottom_embed_url = 'https://www.youtube.com/embed/' ~ video2_id %}
+              {% elif 'vimeo.com' in link2_url %}
+                {% set video2_id = link2_url.split('/')[-1] %}
+                {% set bottom_embed_url = 'https://player.vimeo.com/video/' ~ video2_id %}
+              {% elif 'canva.com' in link2_url %}
+                {% set bottom_embed_url = link2_url.replace('/watch?', '/watch?embed&') %}
+              {% else %}
+                {% set bottom_embed_url = link2_url %}
+              {% endif %}
+              <iframe src="{{ bottom_embed_url }}" allowfullscreen></iframe>
+            {% elif image_url %}
+              <img src="{{ image_url }}" alt="Visual" />
+            {% else %}
+              <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Inter',sans-serif;font-size:11px;color:#999;letter-spacing:1px;">Upload image or add suggestions for AI generation</span>
+            {% endif %}
+          </div>
+        </div>
+        <div>
+          {% if quotes and quotes|length > 1 and quotes[1] %}
+            <div class="visual-quote">“{{ quotes[1].text }}”</div>
+            {% if quotes[1].name %}
+              <div class="visual-quote-name">— {{ quotes[1].name }}</div>
+            {% endif %}
+          {% else %}
+            <div class="visual-quote">“Add a second key quote or leave this as a visual-only section.”</div>
+          {% endif %}
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footer-hero">
+        <h2>The Future of Ownership Has Arrived</h2>
+        <p>Digital-Syndication, by Evolution Stables, Powered By Tokinvest</p>
+      </div>
+      <div class="footer-bar">
+        <div class="footer-legal">
+          <span>&copy; {{ report_date.split(' ')[-1] }} Evolution Stables</span>
+          <span>All rights reserved</span>
+        </div>
+        <div class="footer-social">
+          <span>evostables.nz</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+  <div id="videoModal" class="video-modal" onclick="closeVideoModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <span class="close-btn" onclick="closeVideoModal()">&times;</span>
+      <iframe id="modalIframe" src="" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <script>
+    function openVideoModal() {
+      const modal = document.getElementById('videoModal');
+      const iframe = document.getElementById('modalIframe');
+      const sidebarVideo = document.querySelector('.sidebar-video iframe');
+      if (!sidebarVideo) {
+        return;
+      }
+      let videoSrc = sidebarVideo.src;
+      if (videoSrc.includes('youtube')) {
+        videoSrc += (videoSrc.includes('?') ? '&' : '?') + 'autoplay=1&controls=1';
+      } else if (videoSrc.includes('vimeo')) {
+        videoSrc += (videoSrc.includes('?') ? '&' : '?') + 'autoplay=1';
+      }
+      iframe.src = videoSrc;
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeVideoModal() {
+      const modal = document.getElementById('videoModal');
+      const iframe = document.getElementById('modalIframe');
+      modal.style.display = 'none';
+      iframe.src = '';
+      document.body.style.overflow = 'auto';
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeVideoModal();
+    });
+  </script>
+</body>
+</html>

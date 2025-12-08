@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Evolution Studio | Investor Update</title>
+  <style>
+    :root {
+      --bg: #050915;
+      --panel: #0d1428;
+      --muted: #8ea0c2;
+      --text: #dce7ff;
+      --accent: #7ce7b3;
+      --accent-2: #5ab1ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(92, 177, 255, 0.18), transparent 35%),
+                  radial-gradient(circle at 80% 0%, rgba(124, 231, 179, 0.18), transparent 30%),
+                  var(--bg);
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+    }
+
+    .shell {
+      max-width: 480px;
+      margin: 24px auto;
+      padding: 18px;
+    }
+
+    .card {
+      background: linear-gradient(160deg, rgba(13, 20, 40, 0.9) 0%, rgba(13, 20, 40, 0.8) 100%);
+      border: 1px solid rgba(124, 231, 179, 0.12);
+      border-radius: 18px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 25% 20%, rgba(124, 231, 179, 0.12), transparent 35%),
+                  radial-gradient(circle at 80% 10%, rgba(90, 177, 255, 0.15), transparent 30%);
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(124, 231, 179, 0.12);
+      color: var(--accent);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .headline {
+      margin: 18px 0 6px 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .subheadline {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .divider {
+      height: 1px;
+      width: 100%;
+      background: linear-gradient(90deg, rgba(90, 177, 255, 0.2), rgba(124, 231, 179, 0.2));
+      margin: 16px 0;
+      border: none;
+    }
+
+    .body p {
+      margin: 0 0 12px 0;
+      line-height: 1.55;
+      color: var(--text);
+    }
+
+    .hero-image {
+      width: 100%;
+      border-radius: 14px;
+      margin: 12px 0 10px 0;
+      display: block;
+      border: 1px solid rgba(142, 160, 194, 0.35);
+    }
+
+    .quote-block {
+      margin: 14px 0 4px 0;
+      padding: 10px 14px;
+      border-left: 3px solid var(--accent-2);
+      background: rgba(13, 20, 40, 0.9);
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .quote-text {
+      margin: 0 0 6px 0;
+      font-style: italic;
+    }
+
+    .quote-name {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .cta-stack {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      color: #04101d;
+      background: linear-gradient(120deg, var(--accent) 0%, var(--accent-2) 100%);
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      box-shadow: 0 10px 30px rgba(124, 231, 179, 0.35);
+    }
+
+    .cta:hover {
+      opacity: 0.92;
+    }
+
+    .footer {
+      margin-top: 18px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 540px) {
+      .shell {
+        padding: 12px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="card">
+      <div class="badge">{{ update_icon }} {{ update_type }}</div>
+      <div class="headline">{{ heading or 'Investor Update' }}</div>
+      {% if subheading %}
+        <div class="subheadline">{{ subheading }}</div>
+      {% endif %}
+      <div class="meta">{{ report_date }}</div>
+      <hr class="divider" />
+
+      {% if image_url %}
+        <img src="{{ image_url }}" alt="Update image" class="hero-image" />
+      {% endif %}
+
+      <div class="body">
+        {% for paragraph in body_paragraphs %}
+          <p>{{ paragraph }}</p>
+        {% endfor %}
+      </div>
+
+      {% if quotes %}
+        {% for quote in quotes %}
+          <div class="quote-block">
+            <p class="quote-text">“{{ quote.text }}”</p>
+            {% if quote.name %}
+              <p class="quote-name">— {{ quote.name }}</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      {% if links %}
+        <div class="cta-stack">
+          {% for link in links %}
+            <a class="cta" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }}</a>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="footer">Delivered via Evolution Studio</div>
+  </div>
+</body>
+</html>
