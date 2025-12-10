@@ -1,10 +1,8 @@
 import os
-
 import streamlit as st
 import streamlit.components.v1 as components
 from dotenv import load_dotenv
 from modules.press_room import PressRoom
-
 
 load_dotenv()
 
@@ -12,7 +10,7 @@ st.set_page_config(page_title="Evolution Studio", layout="wide")
 
 press_room = PressRoom()
 
-# Initialize session state
+# --- 1. SESSION STATE INITIALIZATION ---
 if "input_data" not in st.session_state:
     st.session_state["input_data"] = {
         "heading": "",
@@ -31,7 +29,8 @@ if "sidebar_collapsed" not in st.session_state:
 if "page" not in st.session_state:
     st.session_state["page"] = "Raw Content"
 
-# Sidebar
+
+# --- 2. SIDEBAR CONFIGURATION ---
 sidebar_container = st.sidebar
 with sidebar_container:
     top_cols = st.columns([4, 1])
@@ -44,9 +43,10 @@ with sidebar_container:
 
     if not st.session_state["sidebar_collapsed"]:
         update_type = st.selectbox("Update Type", ["Trainer Update", "Race Preview", "Race Result"])
+        # Renamed steps for clarity
         selected = st.radio(
-            "Step",
-            ["Raw Content", "Structured Input"],
+            "Workflow Step",
+            ["1. Raw Content", "2. Editor & Preview"],
             index=0 if st.session_state["page"] == "Raw Content" else 1,
         )
     else:
@@ -57,48 +57,45 @@ with sidebar_container:
         )
         selected = st.radio(
             "Step",
-            ["Raw Content", "Structured Input"],
+            ["1. Raw Content", "2. Editor & Preview"],
             index=0 if st.session_state["page"] == "Raw Content" else 1,
             label_visibility="collapsed",
         )
 
-st.session_state["page"] = selected
-page = st.session_state["page"]
+# Map UI selection back to internal page names
+if "1." in selected:
+    st.session_state["page"] = "Raw Content"
+else:
+    st.session_state["page"] = "Structured Input"
 
+page = st.session_state["page"]
 st.title("📢 Investor Update Builder")
 
+
 # ============================================
-# PAGE 1: RAW CONTENT
+# PAGE 1: RAW CONTENT STAGING
 # ============================================
 if page == "Raw Content":
-    st.subheader("0. Raw Content Staging")
-    st.caption("Paste structured content with labels, or use AI parsing for unstructured text")
+    st.subheader("1. Raw Content Staging")
+    st.caption("Paste your rough text below. Use the AI Parser to structure it automatically.")
 
+    # Simplified placeholder to reduce visual noise
     raw_block = st.text_area(
-        "Paste content here",
-        height=450,
-        placeholder=(
-            "Heading\nFirst Gear Targeting Otaki\n\n"
-            "Subheading\nPatience is key...\n\n"
-            "Body\nFirst Gear has come through...\n\n"
-            "Quote1\n\"Today is good because...\"\n\n"
-            "Name1\nBruno Queiroz\n\n"
-            "Media1\nhttps://... or <iframe>...</iframe>\n"
-        ),
+        "Content Dump",
+        height=400,
+        placeholder="Heading\n...\n\nSubheading\n...\n\nBody\n...\n\nQuote\n...",
         value=st.session_state.get("raw_block", ""),
     )
 
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("➡️ Continue to Structured Input", type="primary", use_container_width=True):
+        # Primary Action: Move Forward
+        if st.button("➡️ Continue to Editor", type="primary", use_container_width=True):
+            # Basic manual parsing fallback
             sections = {
-                "Heading": "",
-                "Subheading": "",
-                "Body": "",
-                "Quote1": "",
-                "Name1": "",
-                "Media1": "",
+                "Heading": "", "Subheading": "", "Body": "",
+                "Quote1": "", "Name1": "", "Media1": "",
             }
             current = None
             for line in (raw_block or "").splitlines():
@@ -125,18 +122,18 @@ if page == "Raw Content":
             st.rerun()
 
     with col2:
-        if st.button("🤖 Smart Parse with AI", use_container_width=True):
+        # AI Action
+        if st.button("🤖 Smart Parse (Gemini AI)", use_container_width=True):
             if not raw_block:
-                st.warning("Please paste some content first")
+                st.warning("⚠️ Paste some content first")
             else:
                 api_key = os.environ.get("GEMINI_API_KEY")
                 if not api_key:
-                    st.error("GEMINI_API_KEY is not set in environment")
+                    st.error("GEMINI_API_KEY is not set")
                 else:
-                    with st.spinner("Analyzing content with AI..."):
+                    with st.spinner("Analyzing content structure..."):
                         try:
                             import json
-
                             import google.generativeai as genai
 
                             genai.configure(api_key=api_key)
@@ -156,9 +153,8 @@ Return ONLY valid JSON with these exact keys:
 Content:
 {raw_block}
 """
-
                             response = model.generate_content(prompt)
-                            parsed = json.loads(response.text.strip().replace("``````", ""))
+                            parsed = json.loads(response.text.strip().replace("``````", "").replace("json", "").replace("```", ""))
 
                             st.session_state["input_data"] = {
                                 "heading": parsed.get("heading", ""),
@@ -170,55 +166,86 @@ Content:
                             }
                             st.session_state["raw_block"] = raw_block
                             st.session_state["page"] = "Structured Input"
-                            st.success("✨ AI parsing complete!")
+                            st.success("Structure extracted!")
                             st.rerun()
 
-                        except Exception as e:  # pragma: no cover - UX surface
+                        except Exception as e:
                             st.error(f"AI parsing failed: {str(e)}")
 
+
 # ============================================
-# PAGE 2: STRUCTURED INPUT
+# PAGE 2: EDITOR & PREVIEW
 # ============================================
 elif page == "Structured Input":
-    col1, col2 = st.columns([1, 2])
+    col1, col2 = st.columns([1, 1.2]) # Adjusted ratio slightly to give preview more room
 
+    # --- LEFT COLUMN: EDITOR ---
     with col1:
-        st.subheader("1. Structured Input")
+        st.subheader("2. Editor")
 
-        # Main Section Inputs
-        st.markdown("### Main Content")
-        heading = st.text_input("Heading *", value=st.session_state["input_data"].get("heading", ""))
-        subheading = st.text_input("Subheading", value=st.session_state["input_data"].get("subheading", ""))
-        body = st.text_area("Body Text", height=200, value=st.session_state["input_data"].get("body", ""))
+        st.caption("Required Fields")
+        heading = st.text_input("Heading", value=st.session_state["input_data"].get("heading", ""))
+        
+        # Reduced height for density
+        body = st.text_area("Body Text", height=150, value=st.session_state["input_data"].get("body", ""))
 
-        st.markdown("### Right Column")
+        st.caption("Optional Context")
+        subheading = st.text_input("Subheading (Subtitle)", value=st.session_state["input_data"].get("subheading", ""))
+
+        st.markdown("#### 🖼️ Hero Media & Quote")
+        
+        # 1. Input the Link
         media1 = st.text_area(
-            "Media 1 (Canva embed/YouTube/Image URL)",
-            height=100,
+            "Primary Visual (URL or Embed)",
+            height=80,
             value=st.session_state["input_data"].get("media1", ""),
-            placeholder="<iframe>...</iframe> or https://...",
+            placeholder="https://youtu.be/... or Canva Link",
+            help="Paste a YouTube, Vimeo, or Canva link here."
         )
+        
+        # 2. STRONG LOGIC: Only ask for orientation if media exists
+        is_portrait = False  # Default to Landscape if no media
+        
+        if media1 and media1.strip():
+            # The toggle ONLY appears if media1 is not empty
+            st.caption("⚙️ Media Settings")
+            media_orientation = st.radio(
+                "Visual Style",
+                ["Landscape (16:9)", "Portrait (9:16)"],
+                horizontal=True,
+                index=0,
+                key="hero_media_orientation"
+            )
+            is_portrait = "Portrait" in media_orientation
+        else:
+            # Clean up UI: If they deleted the link, don't show the option
+            pass 
 
+        # Grouping Quote controls
         quote1_text = st.text_area(
-            "Quote 1 *", height=100, value=st.session_state["input_data"].get("quote1_text", "")
+            "Hero Quote Text", 
+            height=100, 
+            value=st.session_state["input_data"].get("quote1_text", "")
         )
         quote1_name = st.text_input(
-            "Name 1 *", value=st.session_state["input_data"].get("quote1_name", ""), placeholder="Bruno Queiroz, Jockey"
+            "Quote Author", 
+            value=st.session_state["input_data"].get("quote1_name", ""), 
+            placeholder="e.g. Stephen Gray, Trainer"
         )
 
         st.markdown("---")
 
-        # Bonus Section
-        st.markdown("### Bonus Section (Optional)")
+        # --- BONUS SECTION ---
+        st.markdown("#### ➕ Bonus Content")
         enable_bonus = st.checkbox(
-            "Add bonus section below main content", value=st.session_state["bonus_section"]["enabled"]
+            "Enable Bonus Section", value=st.session_state["bonus_section"]["enabled"]
         )
 
         bonus_elements = []
         if enable_bonus:
-            st.caption("Select 1-3 elements. They'll display left-to-right automatically.")
+            st.info("💡 Elements display left-to-right (Desktop) or stacked (Mobile).")
 
-            # Initialize stored selection state from any existing bonus elements
+            # Load existing selection
             existing_types = [
                 e["type"].title() for e in st.session_state["bonus_section"].get("elements", [])
             ]
@@ -226,7 +253,7 @@ elif page == "Structured Input":
                 st.session_state["bonus_selected_types"] = existing_types
 
             selected_types = st.multiselect(
-                "Choose elements (max 3)",
+                "Active Elements (Max 3)",
                 ["Body", "Media", "Quote"],
                 default=st.session_state.get("bonus_selected_types", existing_types),
                 max_selections=3,
@@ -237,42 +264,75 @@ elif page == "Structured Input":
                 st.markdown(f"**Element {idx}: {elem_type}**")
 
                 if elem_type == "Body":
-                    bonus_body = st.text_area(f"Body Text {idx}", height=120, key=f"bonus_body_{idx}")
+                    bonus_body = st.text_area(f"Bonus Body {idx}", height=100, key=f"bonus_body_{idx}")
                     if bonus_body:
                         bonus_elements.append({"type": "body", "content": bonus_body})
 
                 elif elem_type == "Media":
-                    bonus_media = st.text_area(f"Media {idx} (Canva/URL)", height=80, key=f"bonus_media_{idx}")
+                    bonus_media = st.text_area(f"Bonus Media URL {idx}", height=70, key=f"bonus_media_{idx}")
                     if bonus_media:
                         bonus_elements.append({"type": "media", "content": bonus_media})
 
                 elif elem_type == "Quote":
-                    bonus_quote = st.text_area(f"Quote Text {idx}", height=80, key=f"bonus_quote_{idx}")
-                    bonus_name = st.text_input(f"Name {idx}", key=f"bonus_name_{idx}")
+                    bonus_quote = st.text_area(f"Bonus Quote {idx}", height=70, key=f"bonus_quote_{idx}")
+                    bonus_name = st.text_input(f"Author {idx}", key=f"bonus_name_{idx}")
                     if bonus_quote:
                         bonus_elements.append({"type": "quote", "content": bonus_quote, "name": bonus_name})
-
-            # Inline 'Add another' control using remaining, not-yet-selected types
-            remaining_types = [t for t in ["Body", "Media", "Quote"] if t not in selected_types]
-            if remaining_types and len(selected_types) < 3:
-                st.markdown("_Add another bonus element:_")
-                add_cols = st.columns([3, 1])
-                with add_cols[0]:
-                    add_choice = st.selectbox(
-                        "Add another",
-                        remaining_types,
-                        key="bonus_add_choice",
-                    )
-                with add_cols[1]:
-                    if st.button("➕ Add", key="bonus_add_button", use_container_width=True):
-                        st.session_state["bonus_selected_types"] = selected_types + [add_choice]
+            
+            # Simple "Add" logic
+            if len(selected_types) < 3:
+                remaining = [t for t in ["Body", "Media", "Quote"] if t not in selected_types]
+                if remaining:
+                    col_add1, col_add2 = st.columns([2, 1])
+                    new_type = col_add1.selectbox("Add Element type", remaining, label_visibility="collapsed")
+                    if col_add2.button("Add", use_container_width=True):
+                        st.session_state["bonus_selected_types"] = selected_types + [new_type]
                         st.rerun()
 
         st.markdown("---")
 
-        if st.button("✨ Update Preview", type="primary", use_container_width=True):
+    # --- RIGHT COLUMN: PREVIEW ---
+    with col2:
+        # UX IMPROVEMENT: Dual Trigger
+        # A refresh button at the top so users don't have to scroll down the left form
+        top_bar = st.columns([3, 1])
+        with top_bar[0]:
+            st.subheader("3. Live Preview")
+            st.caption("📱 Mobile View (iPhone 14 Pro Max)")
+        with top_bar[1]:
+            # This button acts as a secondary trigger for the generation logic below
+            trigger_refresh = st.button("🔄 Refresh")
+
+        if "html" in st.session_state:
+            # Fixed Mobile Dimensions
+            width, height = 430, 850 
+            
+            components.html(
+                st.session_state["html"],
+                height=height,
+                width=width,
+                scrolling=True,
+            )
+            
+            # Download Button (High visibility)
+            st.download_button(
+                label="⬇️ Download Final HTML",
+                data=st.session_state["html"],
+                file_name=f"investor_update_{update_type.lower().replace(' ', '_')}.html",
+                mime="text/html",
+                type="primary",
+                use_container_width=True,
+            )
+        else:
+            st.info("👈 Click 'Update Preview' to generate the layout.")
+
+    # --- GENERATION LOGIC (Bottom of Col 1) ---
+    # We place this here so it catches the 'Refresh' trigger from Col 2 
+    # OR the main button at bottom of Col 1
+    with col1:
+        if st.button("✨ Update Preview", type="primary", use_container_width=True) or trigger_refresh:
             if not heading or not quote1_text or not quote1_name:
-                st.error("Heading, Quote 1, and Name 1 are required!")
+                st.error("⚠️ Missing Required Fields: Heading, Hero Quote, or Author.")
             else:
                 try:
                     st.session_state["bonus_section"] = {
@@ -288,33 +348,11 @@ elif page == "Structured Input":
                         quote1_text=quote1_text,
                         quote1_name=quote1_name,
                         media1=media1,
+                        media_portrait=is_portrait,
                         bonus_elements=bonus_elements if enable_bonus else [],
                     )
                     st.session_state["html"] = html_output
                     st.success("Preview updated!")
+                    st.rerun()
                 except Exception as exc:
-                    st.error(f"Could not build the report: {exc}")
-
-    with col2:
-        st.subheader("2. Preview")
-
-        if "html" in st.session_state:
-            # Mobile-only preview for now
-            width, height = 430, 1600
-
-            components.html(
-                st.session_state["html"],
-                height=height,
-                width=width,
-                scrolling=True,
-            )
-
-            st.download_button(
-                label="⬇️ Download HTML File",
-                data=st.session_state["html"],
-                file_name=f"investor_update_{update_type.lower().replace(' ', '_')}.html",
-                mime="text/html",
-                use_container_width=True,
-            )
-        else:
-            st.info("👈 Fill in the required fields and click 'Update Preview'")
+                    st.error(f"Error building report: {exc}")
