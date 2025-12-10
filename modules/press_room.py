@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Dict, Optional
 import re
-
 
 class PressRoom:
     def __init__(self) -> None:
@@ -9,24 +8,49 @@ class PressRoom:
 
     def generate_report(
         self,
-        heading: str,
-        subheading: str,
-        body: str,
+        blocks: List[Dict],
         update_type: str,
-        quote_text: str,
-        quote_name: str,
-        media: Optional[str] = None,
-        media_portrait: bool = False,
+        global_media_portrait: bool = False,
     ) -> str:
         """
-        Generate HTML report. 
-        Strict Layout: Main Body on left, Sidebar (Media/Quote/Name) on right.
+        Generate HTML report using a Linear "Block" layout.
+        Renders blocks exactly in the order provided.
         """
-        # Parse body paragraphs
-        body_paragraphs = self._to_paragraphs(body) if body else []
         
-        # Process media
-        media_html = self._process_media(media, media_portrait) if media else None
+        main_content_html = ""
+        
+        # Iterate through the blocks and build HTML linearly
+        for block in blocks:
+            b_type = block.get("type")
+            content = block.get("content", "")
+            
+            if b_type == "heading":
+                main_content_html += f'<h1 class="headline">{content}</h1>'
+            
+            elif b_type == "subheading":
+                main_content_html += f'<div class="subheadline">{content}</div>'
+                
+            elif b_type == "body":
+                # Render standard text
+                main_content_html += self._format_body_paragraphs(content)
+                
+            elif b_type == "grey_box":
+                # Render the grouped Media/Quote/Name block (The Sidebar Style)
+                media_html = ""
+                if block.get("media"):
+                    media_html = self._process_media(block["media"], global_media_portrait) or ""
+                
+                quote_html = f'<blockquote>"{block["quote"]}"</blockquote>' if block.get("quote") else ""
+                name_html = f'<cite>— {block["name"]}</cite>' if block.get("name") else ""
+                
+                if media_html or quote_html or name_html:
+                    main_content_html += f"""
+                    <div class="quote-sidebar">
+                        {media_html}
+                        {quote_html}
+                        {name_html}
+                    </div>
+                    """
 
         # Load SVG watermark for header branding
         try:
@@ -41,19 +65,6 @@ class PressRoom:
                 footer_logo_svg = svg_file.read()
         except Exception:
             footer_logo_svg = ""
-
-        # Sidebar Logic: Render if ANY sidebar element exists
-        has_sidebar_content = any([media_html, quote_text, quote_name])
-        
-        sidebar_html = ""
-        if has_sidebar_content:
-            sidebar_html = f"""
-            <div class="quote-sidebar">
-                {media_html if media_html else ''}
-                {f'<blockquote>"{quote_text}"</blockquote>' if quote_text else ''}
-                {f'<cite>— {quote_name}</cite>' if quote_name else ''}
-            </div>
-            """
 
         html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -78,16 +89,8 @@ class PressRoom:
         </header>
         
         <main>
-            <div class="headline-block">
-                <h1 class="headline">{heading}</h1>
-                {f'<div class="subheadline">{subheading}</div>' if subheading else ''}
-            </div>
-            
             <div class="content-layout">
-                <div class="main-content">
-                    {self._format_body_paragraphs(body_paragraphs)}
-                </div>
-                {sidebar_html}
+                {main_content_html}
             </div>
         </main>
         
@@ -104,9 +107,6 @@ class PressRoom:
                     </a>
                     <a href="https://instagram.com/evostables" target="_blank" aria-label="Instagram">
                         <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                    </a>
-                    <a href="mailto:alex@evolutionstables.nz" aria-label="Email">
-                        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
                     </a>
                 </div>
             </div>
@@ -160,20 +160,23 @@ class PressRoom:
         
         /* MAIN */
         main { flex: 1; display: flex; flex-direction: column; margin-top: 26px; }
-        .headline-block { width: 100%; margin-bottom: 32px; text-align: left; }
+        
+        /* .headline-block removed as we are linear now */
+        
         .headline {
             font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 300;
             line-height: 1.1; margin-bottom: 20px; color: #000; letter-spacing: -0.5px;
         }
         .subheadline {
             font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 400;
-            line-height: 1.4; color: #222;
+            line-height: 1.4; color: #222; margin-bottom: 24px;
         }
         
         /* CONTENT */
-        .content { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.75; color: #1a1a1a; }
+        .content { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.75; color: #1a1a1a; margin-bottom: 16px; }
         .content p { margin-bottom: 1.5em; }
-        .content p:first-of-type::first-letter {
+        /* Only apply drop cap to the VERY first paragraph of the main content area if it appears first */
+        .content:first-of-type p:first-of-type::first-letter {
             font-family: 'Playfair Display', serif; font-size: 3.8em; font-weight: 300;
             float: left; line-height: 0.8; margin-right: 8px; margin-top: 4px;
         }
@@ -183,7 +186,7 @@ class PressRoom:
             background: #f9f9f9; padding: 32px 24px;
             border-left: 2px solid #000000;
             display: flex; flex-direction: column; gap: 24px;
-            margin-top: 12px;
+            margin: 24px 0; /* Vertical spacing in linear layout */
         }
         .quote-sidebar blockquote {
             font-family: 'Playfair Display', serif; font-size: 22px; font-style: italic;
@@ -246,10 +249,16 @@ class PressRoom:
         .footer-social svg { width: 16px; height: 16px; fill: #666; }
         """
 
-    def _format_body_paragraphs(self, paragraphs: List[str]) -> str:
-        if not paragraphs: return ""
+    def _format_body_paragraphs(self, paragraphs: str) -> str:
+        """Accept raw text and split into paragraphs for the content block."""
+        if not paragraphs:
+            return ""
+        # If it's already a list-like string, keep behaviour simple: split by double newlines
+        parts = [p.strip() for p in paragraphs.split("\n\n") if p.strip()]
+        if not parts:
+            return ""
         html = '<div class="content">'
-        for para in paragraphs:
+        for para in parts:
             html += f'<p>{para}</p>'
         html += "</div>"
         return html
