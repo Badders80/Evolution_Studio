@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List, Optional
 import re
 
 
@@ -13,20 +13,20 @@ class PressRoom:
         subheading: str,
         body: str,
         update_type: str,
-        quote1_text: str,
-        quote1_name: str,
-        media1: Optional[str] = None,
+        quote_text: str,
+        quote_name: str,
+        media: Optional[str] = None,
         media_portrait: bool = False,
-        bonus_elements: Optional[List[Dict]] = None,
     ) -> str:
-        """Generate HTML report with main layout plus optional bonus section."""
-        if not heading or not quote1_text or not quote1_name:
-            raise ValueError("Heading, Quote1 text, and Quote1 name are required")
-
+        """
+        Generate HTML report. 
+        Strict Layout: Main Body on left, Sidebar (Media/Quote/Name) on right.
+        """
+        # Parse body paragraphs
         body_paragraphs = self._to_paragraphs(body) if body else []
         
-        # Process media with orientation logic
-        media1_html = self._process_media(media1, media_portrait) if media1 else None
+        # Process media
+        media_html = self._process_media(media, media_portrait) if media else None
 
         # Load SVG watermark for header branding
         try:
@@ -35,20 +35,28 @@ class PressRoom:
         except Exception:
             brand_svg = ""
 
-        bonus_html = ""
-        if bonus_elements:
-            bonus_html = self._generate_bonus_section(bonus_elements)
-
-        sidebar_class = "quote-sidebar-with-media" if media1_html else "quote-sidebar-centered"
+        # Sidebar Logic: Render if ANY sidebar element exists
+        has_sidebar_content = any([media_html, quote_text, quote_name])
+        
+        sidebar_html = ""
+        if has_sidebar_content:
+            sidebar_html = f"""
+            <div class="quote-sidebar">
+                {media_html if media_html else ''}
+                {f'<blockquote>"{quote_text}"</blockquote>' if quote_text else ''}
+                {f'<cite>— {quote_name}</cite>' if quote_name else ''}
+            </div>
+            """
 
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         {self._get_styles()}
     </style>
@@ -72,15 +80,8 @@ class PressRoom:
                 <div class="main-content">
                     {self._format_body_paragraphs(body_paragraphs)}
                 </div>
-                
-                <div class="quote-sidebar {sidebar_class}">
-                    {media1_html if media1_html else ''}
-                    <blockquote>"{quote1_text}"</blockquote>
-                    <cite>— {quote1_name}</cite>
-                </div>
+                {sidebar_html}
             </div>
-            
-            {bonus_html}
         </main>
         
         <footer>
@@ -90,7 +91,7 @@ class PressRoom:
             </div>
             <div class="footer-bar">
                 <div class="footer-legal">
-                    <span> 2023 Evolution Stables</span>
+                    <span>© {datetime.now().year} Evolution Stables</span>
                     <a href="#">Privacy Policy</a>
                     <a href="#">Terms of Service</a>
                 </div>
@@ -113,430 +114,154 @@ class PressRoom:
         return html
 
     def _get_styles(self) -> str:
-        """Complete CSS styles for the layout."""
+        """CSS: Mobile-first, single column layout."""
         return """
-        /* --- RESET & GLOBAL SAFEGUARDS --- */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html, body {
-            overflow-x: hidden; /* Prevents horizontal scroll/wobble */
-            width: 100%;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { overflow-x: hidden; width: 100%; }
         body {
-            background: #ffffff;
-            color: #000000;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            margin: 0;
-            padding: 0;
-            width: 430px; /* Locked mobile width for simulation */
-            min-height: 100vh;
+            background: #ffffff; color: #000000;
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 0;
+            width: 430px; min-height: 100vh;
         }
-        img, iframe, video {
-            max-width: 100%; /* Prevents media from breaking layout */
-        }
+        img, iframe, video { max-width: 100%; }
         .page-container {
-            width: 100%;
-            padding: 16px 20px 24px;
-            display: flex;
-            flex-direction: column;
+            width: 100%; padding: 24px 24px 24px;
+            display: flex; flex-direction: column; min-height: 100%;
         }
         
-        /* HEADER STYLES (non-sticky, left-aligned) */
+        /* HEADER */
         header {
-            width: 100%;
-            max-width: 430px; /* Ensure header doesn't stretch on desktop view */
+            width: 100%; max-width: 430px;
             background: #ffffff;
-            border-bottom: 2px solid #000000;
-            padding: 20px 0 15px 0;
+            padding: 8px 0 16px 0;
+            border-bottom: 1px solid #000000;
             display: flex;
             justify-content: flex-start;
         }
-        .header-content {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            text-align: left;
-            padding: 0 20px;
-            gap: 6px;
-        }
+        .header-content { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 4px; }
         .brand-mark {
             display: block;
             line-height: 0;
+            margin-bottom: 4px;
         }
         .brand-mark svg {
-            height: 40px;
+            height: 90px; /* visual size similar to previous header */
             width: auto;
             display: block;
         }
         .template-type {
-            font-family: 'Inter', sans-serif;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #666;
+            font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
+            letter-spacing: 3px; text-transform: uppercase; color: #666; margin-top: 2px;
         }
         
-        /* MAIN CONTENT TYPOGRAPHY */
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        .content-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-            margin-bottom: 16px;
-        }
-        .headline-block {
-            width: 100%;
-            margin-bottom: 24px;
-            text-align: left;
-        }
-        .main-content {
-            min-width: 0;
-        }
+        /* MAIN */
+        main { flex: 1; display: flex; flex-direction: column; margin-top: 24px; }
+        .headline-block { width: 100%; margin-bottom: 32px; text-align: left; }
         .headline {
-            font-family: 'Playfair Display', serif;
-            font-size: 46px; /* PUNCHIER: Bigger size */
-            font-weight: 900;
-            line-height: 1.05; /* Tighter leading */
-            margin-bottom: 16px;
-            color: #000000;
-            letter-spacing: -1.5px; /* Tighter tracking for impact */
+            font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 300;
+            line-height: 1.1; margin-bottom: 20px; color: #000; letter-spacing: -0.5px;
         }
         .subheadline {
-            font-family: 'Playfair Display', serif;
-            font-size: 22px; /* PUNCHIER: Larger size */
-            font-weight: 600; /* PUNCHIER: Heavier weight */
-            line-height: 1.35;
-            color: #111111; /* Darker for better contrast */
-            font-style: italic;
-        }
-        .content {
-            font-family: 'Inter', sans-serif;
-            font-size: 14px; /* Slightly larger body text for readability */
-            line-height: 1.7;
-            color: #1a1a1a;
-        }
-        .content p {
-            margin-bottom: 1.4em;
-        }
-        /* Editorial Drop Cap for First Paragraph */
-        .content p:first-of-type::first-letter {
-            font-family: 'Playfair Display', serif;
-            font-size: 3.8em;
-            font-weight: 700;
-            float: left;
-            line-height: 0.8;
-            margin-right: 8px;
-            margin-top: 4px;
+            font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 400;
+            line-height: 1.4; color: #222;
         }
         
-        /* SIDEBAR / MEDIA / QUOTES */
+        /* CONTENT */
+        .content { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.75; color: #1a1a1a; }
+        .content p { margin-bottom: 1.5em; }
+        .content p:first-of-type::first-letter {
+            font-family: 'Playfair Display', serif; font-size: 3.8em; font-weight: 300;
+            float: left; line-height: 0.8; margin-right: 8px; margin-top: 4px;
+        }
+        
+        /* SIDEBAR (Quote/Media/Name Block) */
         .quote-sidebar {
-            background: #f8f8f8;
-            padding: 32px 24px;
-            border-left: 4px solid #000000; /* Thicker accent line */
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-        .quote-sidebar-with-media {
-            justify-content: flex-start;
-        }
-        .quote-sidebar-centered {
-            justify-content: center;
-            align-items: center;
+            background: #f9f9f9; padding: 32px 24px;
+            border-left: 2px solid #000000;
+            display: flex; flex-direction: column; gap: 24px;
+            margin-top: 12px;
         }
         .quote-sidebar blockquote {
-            font-family: 'Playfair Display', serif;
-            font-size: 24px; /* PUNCHIER: Magazine style size */
-            font-style: italic;
-            line-height: 1.3;
-            color: #000000;
-            margin: 0;
-            font-weight: 700; /* Bold quote */
-            text-align: center;
+            font-family: 'Playfair Display', serif; font-size: 22px; font-style: italic;
+            line-height: 1.4; color: #000; margin: 0; font-weight: 500; text-align: center;
         }
         .quote-sidebar cite {
-            font-family: 'Inter', sans-serif;
-            font-size: 11px;
-            font-style: normal;
-            color: #666666;
-            font-weight: 700;
-            text-transform: uppercase;
-            text-align: center;
-            display: block;
-            letter-spacing: 1px;
+            font-family: 'Inter', sans-serif; font-size: 11px; font-style: normal;
+            color: #666; font-weight: 600; text-transform: uppercase;
+            text-align: center; display: block; letter-spacing: 1px;
         }
         
         /* MEDIA CONTAINERS */
-        .media-container-landscape, .media-container-portrait {
-            position: relative;
-            width: 100%; /* Changed to 100% of the sidebar/container */
-            max-width: 85%; /* Constrained for aesthetics */
-            margin: 0 auto 10px auto;
-            border-radius: 4px;
-            overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-        }
         .media-container-landscape {
-            aspect-ratio: 16/9;
+            position: relative; width: 100%; margin: 0 auto; border-radius: 2px;
+            overflow: hidden; aspect-ratio: 16/9;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         .media-container-portrait {
-            aspect-ratio: 9/16;
+            position: relative; width: 100%; margin: 0 auto; border-radius: 2px;
+            overflow: hidden; aspect-ratio: 9/16;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
-        .media-container-landscape iframe, .media-container-portrait iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        .sidebar-media-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        iframe, .sidebar-media-image {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; object-fit: cover;
         }
         
-        /* BONUS SECTION */
-        .bonus-section {
-            display: grid;
-            gap: 32px;
-            margin-bottom: 32px;
-            width: 100%;
-        }
-        .bonus-body {
-            background: #ffffff;
-            padding: 0;
-        }
-        .bonus-media {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .bonus-quote {
-            background: #eaeaea; /* Slightly darker than sidebar for differentiation */
-            padding: 30px 24px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 16px;
-        }
-        .bonus-quote blockquote {
-            font-family: 'Playfair Display', serif;
-            font-size: 20px;
-            font-style: italic;
-            line-height: 1.4;
-            color: #000000;
-            margin: 0;
-            text-align: center;
-            font-weight: 600;
-        }
-        
-        /* FOOTER STYLES (non-sticky) */
+        /* FOOTER */
         footer {
-            width: 100%;
-            max-width: 430px; /* Locked to simulation width */
-            background: #000000;
-            color: #ffffff;
-            padding: 30px 20px 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            text-align: center;
-            margin-top: 32px;
+            position: relative; width: 100%; background: #000000; color: #ffffff;
+            padding: 40px 24px; margin-top: 60px; display: flex; flex-direction: column;
+            gap: 24px; text-align: center;
         }
         .footer-hero h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 24px;
-            font-weight: 600;
-            color: #ffffff;
-            margin: 0 0 10px 0;
+            font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 400;
+            color: #fff; margin: 0 0 10px 0;
         }
         .footer-hero p {
-            font-family: 'Inter', sans-serif;
-            font-size: 10px;
-            color: #aaaaaa;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-family: 'Inter', sans-serif; font-size: 10px; color: #888;
+            text-transform: uppercase; letter-spacing: 1px;
         }
         .footer-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 16px;
-            border-top: 1px solid #333333;
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 20px; border-top: 1px solid #333;
         }
-        .footer-legal {
-            display: flex;
-            gap: 12px;
-            font-family: 'Inter', sans-serif;
-            font-size: 9px;
-            color: #888888;
-        }
-        .footer-legal a {
-            color: #888888;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        .footer-legal a:hover {
-            color: #ffffff;
-        }
-        .footer-social {
-            display: flex;
-            gap: 12px;
-        }
-        .footer-social svg {
-            width: 16px;
-            height: 16px;
-            fill: #888888;
-            transition: fill 0.2s;
-        }
-        .footer-social a:hover svg {
-            fill: #ffffff;
-        }
-
-        @media (max-width: 430px) {
-            .headline { font-size: 36px; } 
-            .content { font-size: 14px; }
-            .bonus-section { grid-template-columns: 1fr !important; }
-        }
+        .footer-legal { display: flex; gap: 12px; font-family: 'Inter', sans-serif; font-size: 9px; color: #666; }
+        .footer-legal a { color: #666; text-decoration: none; }
+        .footer-social { display: flex; gap: 12px; }
+        .footer-social svg { width: 16px; height: 16px; fill: #666; }
         """
 
     def _format_body_paragraphs(self, paragraphs: List[str]) -> str:
-        if not paragraphs:
-            return ""
+        if not paragraphs: return ""
         html = '<div class="content">'
         for para in paragraphs:
             html += f'<p>{para}</p>'
         html += "</div>"
         return html
 
-    def _generate_bonus_section(self, elements: List[Dict]) -> str:
-        if not elements:
-            return ""
-
-        num_elements = len(elements)
-        grid_layouts = {
-            1: "1fr",
-            2: "1fr 1fr",
-            3: "1fr 1fr 1fr",
-        }
-        grid_template = grid_layouts.get(num_elements, "1fr")
-
-        html = f'<div class="bonus-section" style="grid-template-columns: {grid_template};">'
-
-        for element in elements:
-            elem_type = element.get("type")
-            content = element.get("content", "")
-
-            if elem_type == "body":
-                paragraphs = self._to_paragraphs(content)
-                html += '<div class="bonus-body"><div class="content">'
-                for para in paragraphs:
-                    html += f'<p>{para}</p>'
-                html += "</div></div>"
-
-            elif elem_type == "media":
-                # For bonus media, default to landscape/square, or we could add logic
-                media_html = self._process_media(content, is_portrait=False) 
-                if media_html:
-                    html += f'<div class="bonus-media">{media_html}</div>'
-
-            elif elem_type == "quote":
-                name = element.get("name", "")
-                html += f"""
-                <div class="bonus-quote">
-                    <blockquote>"{content}"</blockquote>
-                    <cite>— {name}</cite>
-                </div>
-                """
-
-        html += "</div>"
-        return html
-
     def _process_media(self, media_input: str, is_portrait: bool = False) -> Optional[str]:
-        if not media_input or not media_input.strip():
-            return None
-
+        if not media_input or not media_input.strip(): return None
         media_input = media_input.strip()
-        
-        # Determine container class based on orientation flag
         container_class = "media-container-portrait" if is_portrait else "media-container-landscape"
 
-        if "<iframe" in media_input and "canva.com" in media_input:
-            iframe_match = re.search(r"<iframe[^>]*>.*?</iframe>", media_input, re.DOTALL)
-            if iframe_match:
-                # Canva embeds often have their own styles, but we wrap them
-                return f'<div class="{container_class}">{iframe_match.group(0)}</div>'
+        if "<iframe" in media_input:
+            match = re.search(r"<iframe[^>]*>.*?</iframe>", media_input, re.DOTALL)
+            if match:
+                return f'<div class="{container_class}">{match.group(0)}</div>'
+        
+        # Simple Logic: If it's a Canva link, build the iframe
+        if "canva.com/design" in media_input:
+            # Basic extraction - in prod might need more regex if URL varies
+            try:
+                # remove query params for clean ID extraction
+                base = media_input.split('?')[0]
+                return f"""<div class="{container_class}">
+                    <iframe loading="lazy" src="{base}?embed" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
+                </div>"""
+            except: pass
 
-        if "canva.com/design/" in media_input:
-            design_match = re.search(r"/design/([^/]+)", media_input)
-            if design_match:
-                design_id = design_match.group(1)
-                return f"""
-                <div class="{container_class}">
-                    <iframe loading="lazy" 
-                            src="https://www.canva.com/design/{design_id}/watch?embed" 
-                            allowfullscreen="allowfullscreen" 
-                            allow="fullscreen">
-                    </iframe>
-                </div>
-                """
-
-        if "youtube.com" in media_input or "youtu.be" in media_input:
-            video_id = None
-            if "youtu.be/" in media_input:
-                video_id = media_input.split("youtu.be/")[1].split("?")[0]
-            elif "v=" in media_input:
-                video_id = media_input.split("v=")[1].split("&")[0]
-            if video_id:
-                return f"""
-                <div class="{container_class}">
-                    <iframe src="https://www.youtube.com/embed/{video_id}" 
-                            allowfullscreen>
-                    </iframe>
-                </div>
-                """
-
-        if "vimeo.com" in media_input:
-            video_id = media_input.split("/")[-1]
-            return f"""
-            <div class="{container_class}">
-                <iframe src="https://player.vimeo.com/video/{video_id}" 
-                        allowfullscreen>
-                </iframe>
-            </div>
-            """
-
-        if any(ext in media_input.lower() for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]):
-            return f"""
-            <div class="{container_class}">
-                <img src="{media_input}" class="sidebar-media-image" />
-            </div>
-            """
-
-        return None
-
+        return None # Fallback
+    
     def _to_paragraphs(self, raw_text: str) -> List[str]:
-        if not raw_text:
-            return []
-
-        paragraphs = raw_text.split("\n\n")
-        cleaned: List[str] = []
-
-        for para in paragraphs:
-            cleaned_para = " ".join(para.strip().split("\n"))
-            if cleaned_para:
-                cleaned.append(cleaned_para)
-
-        return cleaned
+        if not raw_text: return []
+        return [p.strip() for p in raw_text.split('\n\n') if p.strip()]
