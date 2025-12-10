@@ -7,11 +7,6 @@ st.set_page_config(page_title="Evolution Studio", layout="wide")
 press_room = PressRoom()
 
 # --- SESSION STATE ---
-if "_initialized" not in st.session_state:
-    # Clear any stale internal widget IDs from previous versions of the app
-    st.session_state.clear()
-    st.session_state["_initialized"] = True
-
 if "blocks" not in st.session_state:
     st.session_state["blocks"] = []
 if "raw_text" not in st.session_state:
@@ -22,11 +17,7 @@ if "page" not in st.session_state:
 # --- SIDEBAR (Global Settings) ---
 with st.sidebar:
     st.header("🏇 Evolution Studio")
-    update_type = st.selectbox(
-        "Update Type",
-        ["Trainer Update", "Race Preview", "Race Result"],
-        key="update_type_select",
-    )
+    update_type = st.selectbox("Update Type", ["Trainer Update", "Race Preview", "Race Result"])
     
     st.markdown("---")
     # Reset Button to start over
