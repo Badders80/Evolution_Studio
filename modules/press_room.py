@@ -28,6 +28,13 @@ class PressRoom:
         # Process media with orientation logic
         media1_html = self._process_media(media1, media_portrait) if media1 else None
 
+        # Load SVG watermark for header branding
+        try:
+            with open("assets/Evolution-Watermark-DoubleLine-Black.svg", "r", encoding="utf-8") as svg_file:
+                brand_svg = svg_file.read()
+        except Exception:
+            brand_svg = ""
+
         bonus_html = ""
         if bonus_elements:
             bonus_html = self._generate_bonus_section(bonus_elements)
@@ -50,10 +57,7 @@ class PressRoom:
     <div class="page-container">
         <header>
             <div class="header-content">
-                <div class="brand-stack">
-                    <span>EVOLUTION</span>
-                    <span>STABLES</span>
-                </div>
+                <div class="brand-mark">{brand_svg}</div>
                 <div class="template-type">{update_type.upper()}</div>
             </div>
         </header>
@@ -129,8 +133,6 @@ class PressRoom:
             padding: 0;
             width: 430px; /* Locked mobile width for simulation */
             min-height: 100vh;
-            padding-top: 130px; 
-            padding-bottom: 220px;
         }
         img, iframe, video {
             max-width: 100%; /* Prevents media from breaking layout */
@@ -142,39 +144,32 @@ class PressRoom:
             flex-direction: column;
         }
         
-        /* HEADER STYLES */
+        /* HEADER STYLES (non-sticky, left-aligned) */
         header {
-            position: fixed;
-            top: 0;
-            left: 0;
             width: 100%;
             max-width: 430px; /* Ensure header doesn't stretch on desktop view */
-            background: rgba(255,255,255,0.98);
+            background: #ffffff;
             border-bottom: 2px solid #000000;
-            z-index: 1000;
             padding: 20px 0 15px 0;
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
         }
         .header-content {
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
+            align-items: flex-start;
+            text-align: left;
+            padding: 0 20px;
+            gap: 6px;
         }
-        .brand-stack {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.0;
-            margin-bottom: 8px;
+        .brand-mark {
+            display: block;
+            line-height: 0;
         }
-        .brand-stack span {
-            font-family: 'Inter', sans-serif;
-            font-size: 22px; /* Increased branding size */
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            text-transform: uppercase;
-            color: #000;
+        .brand-mark svg {
+            height: 40px;
+            width: auto;
+            display: block;
         }
         .template-type {
             font-family: 'Inter', sans-serif;
@@ -347,21 +342,18 @@ class PressRoom:
             font-weight: 600;
         }
         
-        /* FOOTER STYLES */
+        /* FOOTER STYLES (non-sticky) */
         footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
             width: 100%;
             max-width: 430px; /* Locked to simulation width */
             background: #000000;
             color: #ffffff;
-            z-index: 1000;
             padding: 30px 20px 40px;
             display: flex;
             flex-direction: column;
             gap: 20px;
             text-align: center;
+            margin-top: 32px;
         }
         .footer-hero h2 {
             font-family: 'Playfair Display', serif;
