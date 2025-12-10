@@ -35,6 +35,13 @@ class PressRoom:
         except Exception:
             brand_svg = ""
 
+        # Load footer logo SVG
+        try:
+            with open("assets/Logo-Black.svg", "r", encoding="utf-8") as svg_file:
+                footer_logo_svg = svg_file.read()
+        except Exception:
+            footer_logo_svg = ""
+
         # Sidebar Logic: Render if ANY sidebar element exists
         has_sidebar_content = any([media_html, quote_text, quote_name])
         
@@ -86,15 +93,11 @@ class PressRoom:
         
         <footer>
             <div class="footer-hero">
-                <h2>The Future of Ownership Has Arrived</h2>
+                <h2>The Future of <span class="highlight-ownership">Ownership</span><br>Has Arrived</h2>
                 <p>Digital-Syndication, by Evolution Stables, Powered By Tokinvest</p>
             </div>
             <div class="footer-bar">
-                <div class="footer-legal">
-                    <span>© {datetime.now().year} Evolution Stables</span>
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                </div>
+                <div class="footer-logo">{footer_logo_svg}</div>
                 <div class="footer-social">
                     <a href="https://x.com/evostables" target="_blank" aria-label="X">
                         <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -134,16 +137,16 @@ class PressRoom:
         header {
             width: 100%; max-width: 430px;
             background: #ffffff;
-            padding: 8px 0 16px 0;
+            padding: 8px 0 12px 0;
             border-bottom: 1px solid #000000;
             display: flex;
             justify-content: flex-start;
         }
-        .header-content { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 4px; }
+        .header-content { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 2px; }
         .brand-mark {
             display: block;
             line-height: 0;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         .brand-mark svg {
             height: 90px; /* visual size similar to previous header */
@@ -152,11 +155,11 @@ class PressRoom:
         }
         .template-type {
             font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600;
-            letter-spacing: 3px; text-transform: uppercase; color: #666; margin-top: 2px;
+            letter-spacing: 3px; text-transform: uppercase; color: #666; margin-top: 0;
         }
         
         /* MAIN */
-        main { flex: 1; display: flex; flex-direction: column; margin-top: 24px; }
+        main { flex: 1; display: flex; flex-direction: column; margin-top: 26px; }
         .headline-block { width: 100%; margin-bottom: 32px; text-align: left; }
         .headline {
             font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 300;
@@ -210,23 +213,35 @@ class PressRoom:
         /* FOOTER */
         footer {
             position: relative; width: 100%; background: #000000; color: #ffffff;
-            padding: 40px 24px; margin-top: 60px; display: flex; flex-direction: column;
-            gap: 24px; text-align: center;
+            padding: 56px 24px 60px; margin-top: 72px; display: flex; flex-direction: column;
+            gap: 32px; text-align: center;
         }
         .footer-hero h2 {
             font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 400;
-            color: #fff; margin: 0 0 10px 0;
+            color: #fff; margin: 0 0 14px 0;
+        }
+        .footer-hero .highlight-ownership {
+            color: #d4a964;
         }
         .footer-hero p {
             font-family: 'Inter', sans-serif; font-size: 10px; color: #888;
             text-transform: uppercase; letter-spacing: 1px;
+            margin: 0 0 6px 0;
         }
         .footer-bar {
             display: flex; justify-content: space-between; align-items: center;
-            padding-top: 20px; border-top: 1px solid #333;
+            padding-top: 26px; border-top: 1px solid #333;
         }
-        .footer-legal { display: flex; gap: 12px; font-family: 'Inter', sans-serif; font-size: 9px; color: #666; }
-        .footer-legal a { color: #666; text-decoration: none; }
+        .footer-logo {
+            display: flex;
+            align-items: center;
+        }
+        .footer-logo svg {
+            width: 16px;
+            height: 16px;
+            fill: #666;
+            display: block;
+        }
         .footer-social { display: flex; gap: 12px; }
         .footer-social svg { width: 16px; height: 16px; fill: #666; }
         """
