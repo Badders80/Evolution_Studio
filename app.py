@@ -77,7 +77,6 @@ def parse_and_order_content(text):
 
                 # If we encounter a second MEDIA in the same run, start a new grey box
                 if ctype == "media" and seen_media:
-                    # close current grey_box and start a fresh one without advancing i
                     blocks.append(grey_box)
                     grey_box = {"type": "grey_box", "media": "", "quote": "", "name": "", "media_portrait": False}
                     seen_media = False
@@ -248,4 +247,4 @@ with col2:
             help="Force a full refresh if things look stuck",
             use_container_width=True,
         ):
-            st.experimental_rerun()
+            st.rerun()
