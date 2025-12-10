@@ -38,7 +38,8 @@ class PressRoom:
                 # Render the grouped Media/Quote/Name block (The Sidebar Style)
                 media_html = ""
                 if block.get("media"):
-                    media_html = self._process_media(block["media"], global_media_portrait) or ""
+                    is_portrait = block.get("media_portrait", global_media_portrait)
+                    media_html = self._process_media(block["media"], is_portrait) or ""
                 
                 quote_html = f'<blockquote>"{block["quote"]}"</blockquote>' if block.get("quote") else ""
                 name_html = f'<cite>— {block["name"]}</cite>' if block.get("name") else ""
@@ -66,6 +67,9 @@ class PressRoom:
         except Exception:
             footer_logo_svg = ""
 
+        # Ensure update_type is a string for safe uppercasing
+        update_label = str(update_type) if update_type is not None else ""
+
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,7 +88,7 @@ class PressRoom:
         <header>
             <div class="header-content">
                 <div class="brand-mark">{brand_svg}</div>
-                <div class="template-type">{update_type.upper()}</div>
+                <div class="template-type">{update_label.upper()}</div>
             </div>
         </header>
         
@@ -185,7 +189,7 @@ class PressRoom:
         .quote-sidebar {
             background: #f9f9f9; padding: 32px 24px;
             border-left: 2px solid #000000;
-            display: flex; flex-direction: column; gap: 24px;
+            display: flex; flex-direction: column; gap: 32px;
             margin: 24px 0; /* Vertical spacing in linear layout */
         }
         .quote-sidebar blockquote {
