@@ -1,6 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 from modules.press_room import PressRoom
+import uuid
 
 st.set_page_config(page_title="Evolution Studio", layout="wide")
 
@@ -59,17 +60,27 @@ def parse_and_order_content(text):
     if current_key:
         segments.append({"type": current_key.lower(), "content": "\n".join(buffer).strip()})
 
-    # 2. Group Sidebar Elements
+    # 2. Group Sidebar Elements & Assign IDs
     i = 0
     while i < len(segments):
         seg = segments[i]
         stype = seg["type"]
         
         if stype in ["heading", "subheading", "body"]:
+            # Assign a unique ID immediately
+            seg["id"] = str(uuid.uuid4())
             blocks.append(seg)
             i += 1
         else:
-            grey_box = {"type": "grey_box", "media": "", "quote": "", "name": "", "media_portrait": False}
+            # Assign ID to the container; default media to PORTRAIT
+            grey_box = {
+                "id": str(uuid.uuid4()),
+                "type": "grey_box",
+                "media": "",
+                "quote": "",
+                "name": "",
+                "media_portrait": True,
+            }
             seen_media = False
             while i < len(segments) and segments[i]["type"] in ["media", "quote", "name"]:
                 curr = segments[i]
@@ -78,7 +89,14 @@ def parse_and_order_content(text):
                 # If we encounter a second MEDIA in the same run, start a new grey box
                 if ctype == "media" and seen_media:
                     blocks.append(grey_box)
-                    grey_box = {"type": "grey_box", "media": "", "quote": "", "name": "", "media_portrait": False}
+                    grey_box = {
+                        "id": str(uuid.uuid4()),
+                        "type": "grey_box",
+                        "media": "",
+                        "quote": "",
+                        "name": "",
+                        "media_portrait": True,
+                    }
                     seen_media = False
                     continue
 
@@ -135,6 +153,11 @@ with col1:
             st.info("No blocks yet. Add one below!")
 
         for i, block in enumerate(st.session_state["blocks"]):
+            # Safety: ensure every block has a stable ID (for older sessions)
+            if "id" not in block:
+                block["id"] = str(uuid.uuid4())
+
+            bid = block["id"]
             b_type = block["type"]
             
             # Use columns to put Move/Delete buttons on the same row as the expander
@@ -151,17 +174,17 @@ with col1:
             with st.expander(f"{label_map.get(b_type, b_type)}  (#{i+1})", expanded=False):
                 # Content Inputs
                 if b_type == "heading":
-                    block["content"] = st.text_input("Text", block["content"], key=f"h_{i}", label_visibility="collapsed")
+                    block["content"] = st.text_input("Text", block["content"], key=f"h_{bid}", label_visibility="collapsed")
                 elif b_type == "subheading":
-                    block["content"] = st.text_input("Text", block["content"], key=f"s_{i}", label_visibility="collapsed")
+                    block["content"] = st.text_input("Text", block["content"], key=f"s_{bid}", label_visibility="collapsed")
                 elif b_type == "body":
-                    block["content"] = st.text_area("Text", block["content"], height=150, key=f"b_{i}", label_visibility="collapsed")
+                    block["content"] = st.text_area("Text", block["content"], height=150, key=f"b_{bid}", label_visibility="collapsed")
                 elif b_type == "bullets":
                     st.caption("One item per line")
-                    block["content"] = st.text_area("List Items", block["content"], height=100, key=f"bl_{i}", label_visibility="collapsed")
+                    block["content"] = st.text_area("List Items", block["content"], height=100, key=f"bl_{bid}", label_visibility="collapsed")
                 elif b_type == "grey_box":
                     st.caption("Media")
-                    block["media"] = st.text_input("Media Link", block.get("media", ""), key=f"gm_{i}")
+                    block["media"] = st.text_input("Media Link", block.get("media", ""), key=f"gm_{bid}")
                     # Per-block media orientation
                     current_portrait = block.get("media_portrait", False)
                     orientation_choice = st.radio(
@@ -169,26 +192,26 @@ with col1:
                         ["Landscape (16:9)", "Portrait (9:16)"],
                         index=1 if current_portrait else 0,
                         horizontal=True,
-                        key=f"ratio_{i}",
+                        key=f"ratio_{bid}",
                     )
                     block["media_portrait"] = "Portrait" in orientation_choice
                     st.caption("Quote")
-                    block["quote"] = st.text_area("Quote", block.get("quote", ""), height=80, key=f"gq_{i}")
+                    block["quote"] = st.text_area("Quote", block.get("quote", ""), height=80, key=f"gq_{bid}")
                     st.caption("Name")
-                    block["name"] = st.text_input("Name", block.get("name", ""), key=f"gn_{i}")
+                    block["name"] = st.text_input("Name", block.get("name", ""), key=f"gn_{bid}")
 
                 # Formatting hint
                 st.caption("Formatting: use **bold** and *italics* markdown in text fields.")
 
                 # Control Bar (Move Up / Move Down / Delete)
                 c1, c2, c3, c4 = st.columns([1, 1, 4, 1])
-                if c1.button("⬆️", key=f"up_{i}", help="Move Up"):
+                if c1.button("⬆️", key=f"up_{bid}", help="Move Up"):
                     move_block(i, -1)
                     st.rerun()
-                if c2.button("⬇️", key=f"down_{i}", help="Move Down"):
+                if c2.button("⬇️", key=f"down_{bid}", help="Move Down"):
                     move_block(i, 1)
                     st.rerun()
-                if c4.button("🗑️", key=f"del_{i}", type="secondary", help="Delete Block"):
+                if c4.button("🗑️", key=f"del_{bid}", type="secondary", help="Delete Block"):
                     delete_block(i)
                     st.rerun()
 
@@ -205,16 +228,17 @@ with col1:
             )
         with add_col2:
             if st.button("Add Block", use_container_width=True):
+                new_id = str(uuid.uuid4())
                 if add_type == "Body Text":
-                    st.session_state["blocks"].append({"type": "body", "content": ""})
+                    st.session_state["blocks"].append({"id": new_id, "type": "body", "content": ""})
                 elif add_type == "Bullet List":
-                    st.session_state["blocks"].append({"type": "bullets", "content": "• Point 1\n• Point 2"})
+                    st.session_state["blocks"].append({"id": new_id, "type": "bullets", "content": "• Point 1\n• Point 2"})
                 elif add_type == "Grey Box (Media/Quote)":
-                    st.session_state["blocks"].append({"type": "grey_box", "media": "", "quote": "", "name": ""})
+                    st.session_state["blocks"].append({"id": new_id, "type": "grey_box", "media": "", "quote": "", "name": "", "media_portrait": True})
                 elif add_type == "Heading":
-                    st.session_state["blocks"].append({"type": "heading", "content": ""})
+                    st.session_state["blocks"].append({"id": new_id, "type": "heading", "content": ""})
                 elif add_type == "Subheading":
-                    st.session_state["blocks"].append({"type": "subheading", "content": ""})
+                    st.session_state["blocks"].append({"id": new_id, "type": "subheading", "content": ""})
                 st.rerun()
 
 # === RIGHT COLUMN: PREVIEW ===

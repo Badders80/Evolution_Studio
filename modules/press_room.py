@@ -89,7 +89,7 @@ class PressRoom:
     <meta name="robots" content="noindex, nofollow" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <style>
         {self._get_styles()}
     </style>
@@ -179,12 +179,21 @@ class PressRoom:
         /* .headline-block removed as we are linear now */
         
         .headline {
-            font-family: 'Playfair Display', serif; font-size: 44px; font-weight: 300;
-            line-height: 1.1; margin-bottom: 20px; color: #000; letter-spacing: -0.5px;
+            font-family: 'Playfair Display', serif; 
+            font-size: 44px; 
+            font-weight: 400; /* UPDATED: Slightly heavier (was 300) */
+            line-height: 1.1; 
+            margin-bottom: 20px; 
+            color: #000; 
+            letter-spacing: -0.5px;
         }
         .subheadline {
-            font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 400;
-            line-height: 1.4; color: #222; margin-bottom: 24px;
+            font-family: 'Inter', sans-serif; /* UPDATED: Changed to Inter */
+            font-size: 20px; /* UPDATED: Inter is naturally larger, so 20px matches the previous 22px visual */
+            font-weight: 500; /* UPDATED: Medium weight for emphasis */
+            line-height: 1.5; 
+            color: #222; 
+            margin-bottom: 24px;
             text-align: justify;
             hyphens: auto;
         }
