@@ -33,6 +33,13 @@ class PressRoom:
             elif b_type == "body":
                 # Render standard text
                 main_content_html += self._format_body_paragraphs(content)
+
+            elif b_type == "bullets":
+                # Render bullet points
+                items = [line.strip() for line in content.split('\n') if line.strip()]
+                if items:
+                    list_items = "".join([f"<li>{item}</li>" for item in items])
+                    main_content_html += f'<ul class="bullet-list">{list_items}</ul>'
                 
             elif b_type == "grey_box":
                 # Render the grouped Media/Quote/Name block (The Sidebar Style)
@@ -41,7 +48,11 @@ class PressRoom:
                     is_portrait = block.get("media_portrait", global_media_portrait)
                     media_html = self._process_media(block["media"], is_portrait) or ""
                 
-                quote_html = f'<blockquote>"{block["quote"]}"</blockquote>' if block.get("quote") else ""
+                quote_html = (
+                    f'<blockquote><span class="quote-mark">“</span>{block["quote"]}<span class="quote-mark">”</span></blockquote>'
+                    if block.get("quote")
+                    else ""
+                )
                 name_html = f'<cite>— {block["name"]}</cite>' if block.get("name") else ""
                 
                 if media_html or quote_html or name_html:
@@ -174,10 +185,20 @@ class PressRoom:
         .subheadline {
             font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 400;
             line-height: 1.4; color: #222; margin-bottom: 24px;
+            text-align: justify;
+            hyphens: auto;
         }
         
-        /* CONTENT */
-        .content { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.75; color: #1a1a1a; margin-bottom: 16px; }
+        /* CONTENT (Spread look) */
+        .content { 
+            font-family: 'Inter', sans-serif; 
+            font-size: 15px; 
+            line-height: 1.75; 
+            color: #1a1a1a; 
+            margin-bottom: 16px;
+            text-align: justify;
+            hyphens: auto;
+        }
         .content p { margin-bottom: 1.5em; }
         /* Only apply drop cap to the VERY first paragraph of the main content area if it appears first */
         .content:first-of-type p:first-of-type::first-letter {
@@ -185,21 +206,37 @@ class PressRoom:
             float: left; line-height: 0.8; margin-right: 8px; margin-top: 4px;
         }
         
+        /* BULLET LISTS */
+        .bullet-list {
+            font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6;
+            color: #1a1a1a; margin: 0 0 24px 16px; padding-left: 0;
+            text-align: left; /* Bullets look best left-aligned */
+        }
+        .bullet-list li { margin-bottom: 8px; padding-left: 8px; }
+        .bullet-list li::marker { color: #000000; font-size: 1.2em; }
+        
         /* SIDEBAR (Quote/Media/Name Block) */
         .quote-sidebar {
             background: #f9f9f9; padding: 32px 24px;
             border-left: 2px solid #000000;
-            display: flex; flex-direction: column; gap: 32px;
-            margin: 24px 0; /* Vertical spacing in linear layout */
+            display: flex; flex-direction: column; gap: 24px;
+            margin: 24px 0;
         }
         .quote-sidebar blockquote {
             font-family: 'Playfair Display', serif; font-size: 22px; font-style: italic;
-            line-height: 1.4; color: #000; margin: 0; font-weight: 500; text-align: center;
+            line-height: 1.6; color: #000; margin: 0; font-weight: 500; text-align: left;
         }
         .quote-sidebar cite {
             font-family: 'Inter', sans-serif; font-size: 11px; font-style: normal;
             color: #666; font-weight: 600; text-transform: uppercase;
-            text-align: center; display: block; letter-spacing: 1px;
+            text-align: left; display: block; letter-spacing: 1px;
+        }
+        .quote-sidebar .quote-mark {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            line-height: 0.8;
+            vertical-align: top;
+            margin-right: 4px;
         }
         
         /* MEDIA CONTAINERS */

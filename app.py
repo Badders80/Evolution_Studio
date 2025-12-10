@@ -70,10 +70,24 @@ def parse_and_order_content(text):
             i += 1
         else:
             grey_box = {"type": "grey_box", "media": "", "quote": "", "name": "", "media_portrait": False}
+            seen_media = False
             while i < len(segments) and segments[i]["type"] in ["media", "quote", "name"]:
                 curr = segments[i]
-                grey_box[curr["type"]] = curr["content"]
+                ctype = curr["type"]
+
+                # If we encounter a second MEDIA in the same run, start a new grey box
+                if ctype == "media" and seen_media:
+                    # close current grey_box and start a fresh one without advancing i
+                    blocks.append(grey_box)
+                    grey_box = {"type": "grey_box", "media": "", "quote": "", "name": "", "media_portrait": False}
+                    seen_media = False
+                    continue
+
+                grey_box[ctype] = curr["content"]
+                if ctype == "media":
+                    seen_media = True
                 i += 1
+
             blocks.append(grey_box)
             
     return blocks
@@ -131,6 +145,7 @@ with col1:
                 "heading": "H1 Heading",
                 "subheading": "H2 Subheading",
                 "body": "Body Text",
+                "bullets": "Bullet List",
                 "grey_box": "Sidebar Module (Media/Quote)"
             }
             
@@ -142,6 +157,9 @@ with col1:
                     block["content"] = st.text_input("Text", block["content"], key=f"s_{i}", label_visibility="collapsed")
                 elif b_type == "body":
                     block["content"] = st.text_area("Text", block["content"], height=150, key=f"b_{i}", label_visibility="collapsed")
+                elif b_type == "bullets":
+                    st.caption("One item per line")
+                    block["content"] = st.text_area("List Items", block["content"], height=100, key=f"bl_{i}", label_visibility="collapsed")
                 elif b_type == "grey_box":
                     st.caption("Media")
                     block["media"] = st.text_input("Media Link", block.get("media", ""), key=f"gm_{i}")
@@ -183,13 +201,15 @@ with col1:
         with add_col1:
             add_type = st.selectbox(
                 "Block Type", 
-                ["Body Text", "Grey Box (Media/Quote)", "Heading", "Subheading"],
+                ["Body Text", "Bullet List", "Grey Box (Media/Quote)", "Heading", "Subheading"],
                 label_visibility="collapsed"
             )
         with add_col2:
             if st.button("Add Block", use_container_width=True):
                 if add_type == "Body Text":
                     st.session_state["blocks"].append({"type": "body", "content": ""})
+                elif add_type == "Bullet List":
+                    st.session_state["blocks"].append({"type": "bullets", "content": "• Point 1\n• Point 2"})
                 elif add_type == "Grey Box (Media/Quote)":
                     st.session_state["blocks"].append({"type": "grey_box", "media": "", "quote": "", "name": ""})
                 elif add_type == "Heading":
@@ -208,21 +228,24 @@ with col2:
         update_type=update_type,
     )
     
-    # Render the mobile view
+    # Preview Container (Fixed Width)
     components.html(html, height=850, width=430, scrolling=True)
     
-    # Render the download button constrained to the same width
-    button_col, _ = st.columns([0.6, 0.4]) # Adjust ratio if it looks off on your screen
-    with button_col:
+    # Place Download + Regenerate side by side, filling the full column width
+    col_download, col_regen = st.columns(2)
+    with col_download:
         st.download_button(
             "⬇️ Download HTML",
             data=html,
             file_name="update.html",
             mime="text/html",
             type="primary",
-            use_container_width=True 
+            use_container_width=True,
         )
-
-    # Optional manual refresh control in case the UI ever feels out of sync
-    if st.button("🔄 Regenerate Preview", help="Force a full refresh if things look stuck"):
-        st.experimental_rerun()
+    with col_regen:
+        if st.button(
+            "🔄 Regenerate Preview",
+            help="Force a full refresh if things look stuck",
+            use_container_width=True,
+        ):
+            st.experimental_rerun()
