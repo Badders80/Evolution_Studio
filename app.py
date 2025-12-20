@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 from modules.press_room import PressRoom
 import uuid
+import env  # noqa: F401  # Validate required environment variables at startup.
 
 st.set_page_config(page_title="Evolution Studio", layout="wide")
 
@@ -36,13 +37,16 @@ def parse_and_order_content(text):
     Parses raw text into an ordered list of blocks.
     Groups Media/Quote/Name into 'grey_box' blocks.
     """
+    if not text or not text.strip():
+        return []
+    
     lines = text.splitlines()
     blocks = []
     
     current_key = None
     buffer = []
     
-    keywords = ["HEADING", "SUBHEADING", "BODY", "MEDIA", "QUOTE", "NAME"]
+    keywords = ["HEADING", "SUBHEADING", "BODY", "BULLETS", "BULLET", "MEDIA", "QUOTE", "NAME"]
 
     # 1. Tokenize
     segments = []
@@ -51,14 +55,22 @@ def parse_and_order_content(text):
         upper = clean.upper()
         if upper in keywords:
             if current_key:
-                segments.append({"type": current_key.lower(), "content": "\n".join(buffer).strip()})
+                content = "\n".join(buffer).strip()
+                if content:  # Only add non-empty segments
+                    normalized_type = "bullets" if current_key in ("BULLET", "BULLETS") else current_key.lower()
+                    segments.append({"type": normalized_type, "content": content})
             current_key = upper
             buffer = []
         else:
             if current_key:
                 buffer.append(clean)
-    if current_key:
-        segments.append({"type": current_key.lower(), "content": "\n".join(buffer).strip()})
+    
+    # Don't forget the last segment
+    if current_key and buffer:
+        content = "\n".join(buffer).strip()
+        if content:
+            normalized_type = "bullets" if current_key in ("BULLET", "BULLETS") else current_key.lower()
+            segments.append({"type": normalized_type, "content": content})
 
     # 2. Group Sidebar Elements & Assign IDs
     i = 0
@@ -68,6 +80,10 @@ def parse_and_order_content(text):
         
         if stype in ["heading", "subheading", "body"]:
             # Assign a unique ID immediately
+            seg["id"] = str(uuid.uuid4())
+            blocks.append(seg)
+            i += 1
+        elif stype == "bullets":
             seg["id"] = str(uuid.uuid4())
             blocks.append(seg)
             i += 1
@@ -144,9 +160,21 @@ with col1:
                 st.session_state["blocks"][index], st.session_state["blocks"][index-1] = st.session_state["blocks"][index-1], st.session_state["blocks"][index]
             elif direction == 1 and index < len(st.session_state["blocks"]) - 1:
                 st.session_state["blocks"][index], st.session_state["blocks"][index+1] = st.session_state["blocks"][index+1], st.session_state["blocks"][index]
-        
+
         def delete_block(index):
             st.session_state["blocks"].pop(index)
+
+        for block in st.session_state["blocks"]:
+            if "id" not in block:
+                block["id"] = str(uuid.uuid4())
+
+        label_map = {
+            "heading": "H1 Heading",
+            "subheading": "H2 Subheading",
+            "body": "Body Text",
+            "bullets": "Bullet List",
+            "grey_box": "Sidebar Module (Media/Quote)"
+        }
 
         # 1. Render the Stack
         if not st.session_state["blocks"]:
@@ -162,16 +190,9 @@ with col1:
             
             # Use columns to put Move/Delete buttons on the same row as the expander
             # Note: Streamlit layout is tricky here, putting buttons INSIDE the expander is cleaner for width
+            exp_col, up_col, down_col = st.columns([10, 1, 1])
             
-            label_map = {
-                "heading": "H1 Heading",
-                "subheading": "H2 Subheading",
-                "body": "Body Text",
-                "bullets": "Bullet List",
-                "grey_box": "Sidebar Module (Media/Quote)"
-            }
-            
-            with st.expander(f"{label_map.get(b_type, b_type)}  (#{i+1})", expanded=False):
+            with exp_col.expander(f"{label_map.get(b_type, b_type)}  (#{i+1})", expanded=False):
                 # Content Inputs
                 if b_type == "heading":
                     block["content"] = st.text_input("Text", block["content"], key=f"h_{bid}", label_visibility="collapsed")
@@ -203,16 +224,19 @@ with col1:
                 # Formatting hint
                 st.caption("Formatting: use **bold** and *italics* markdown in text fields.")
 
-                # Control Bar (Move Up / Move Down / Delete)
-                c1, c2, c3, c4 = st.columns([1, 1, 4, 1])
-                if c1.button("⬆️", key=f"up_{bid}", help="Move Up"):
+                # Delete button
+                delete_col = st.columns([5, 1])[1]
+                if delete_col.button("🗑️", key=f"del_{bid}", type="secondary", help="Delete Block"):
+                    delete_block(i)
+                    st.rerun()
+
+            with up_col:
+                if st.button("⬆️", key=f"inline_up_{bid}", help="Move Up"):
                     move_block(i, -1)
                     st.rerun()
-                if c2.button("⬇️", key=f"down_{bid}", help="Move Down"):
+            with down_col:
+                if st.button("⬇️", key=f"inline_down_{bid}", help="Move Down"):
                     move_block(i, 1)
-                    st.rerun()
-                if c4.button("🗑️", key=f"del_{bid}", type="secondary", help="Delete Block"):
-                    delete_block(i)
                     st.rerun()
 
         # 2. "Add Block" Section (At the bottom of the stack)

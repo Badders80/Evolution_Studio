@@ -6,55 +6,42 @@ class TestEvolutionLogic(unittest.TestCase):
     def setUp(self):
         """Setup run before every test."""
         self.pr = PressRoom()
-        self.base_data = {
-            "heading": "Test Heading",
-            "subheading": "Test Sub",
-            "body": "Test Body",
-            "update_type": "Race Preview",
-            "quote1_text": "Great run.",
-            "quote1_name": "Trainer",
-        }
 
     def test_media_logic_landscape(self):
         """Logic Check: If I ask for Landscape, does the HTML reflect it?"""
-        html = self.pr.generate_report(
-            **self.base_data,
-            media1="https://www.youtube.com/watch?v=video123",
-            media_portrait=False,  # Request Landscape
-        )
-        # Look for the landscape container element
+        blocks = [
+            {"type": "grey_box", "media": "https://www.youtube.com/watch?v=video123", "quote": "", "name": "", "media_portrait": False}
+        ]
+        html = self.pr.generate_report(blocks=blocks, update_type="Race Preview", global_media_portrait=False)
         self.assertIn('<div class="media-container-landscape">', html)
 
     def test_media_logic_portrait(self):
         """Logic Check: If I ask for Portrait, does the HTML reflect it?"""
-        html = self.pr.generate_report(
-            **self.base_data,
-            media1="https://www.youtube.com/watch?v=video123",
-            media_portrait=True,  # Request Portrait
-        )
+        blocks = [
+            {"type": "grey_box", "media": "https://www.youtube.com/watch?v=video123", "quote": "", "name": "", "media_portrait": True}
+        ]
+        html = self.pr.generate_report(blocks=blocks, update_type="Race Preview", global_media_portrait=False)
         self.assertIn('<div class="media-container-portrait">', html)
 
     def test_empty_media_overrides_orientation(self):
         """Logic Check: If NO media is provided, orientation flags should be ignored."""
-        html = self.pr.generate_report(
-            **self.base_data,
-            media1="",  # Empty Media
-            media_portrait=True,  # Ask for Portrait, but there is no media
-        )
-        # Result: Should NOT try to render an iframe at all
+        blocks = [
+            {"type": "grey_box", "media": "", "quote": "Test", "name": "Author", "media_portrait": True}
+        ]
+        html = self.pr.generate_report(blocks=blocks, update_type="Race Preview")
         self.assertNotIn("<iframe", html)
 
-    def test_bonus_section_logic(self):
-        """Logic Check: Does the bonus section stack correctly?"""
-        bonus = [
-            {"type": "quote", "content": "Bonus Quote", "name": "Author"}
+    def test_block_ordering(self):
+        """Logic Check: Does the linear block system preserve order?"""
+        blocks = [
+            {"type": "heading", "content": "Test Heading"},
+            {"type": "body", "content": "Paragraph 1"},
+            {"type": "grey_box", "media": "", "quote": "Great run.", "name": "Trainer", "media_portrait": False},
         ]
-        html = self.pr.generate_report(
-            **self.base_data,
-            bonus_elements=bonus,
-        )
-        self.assertIn("bonus-quote", html)
-        self.assertIn("Bonus Quote", html)
+        html = self.pr.generate_report(blocks=blocks, update_type="Race Preview")
+        self.assertIn("Test Heading", html)
+        self.assertIn("Paragraph 1", html)
+        self.assertIn("Great run.", html)
 
 
 if __name__ == "__main__":

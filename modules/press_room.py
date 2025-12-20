@@ -17,6 +17,10 @@ class PressRoom:
         Renders blocks exactly in the order provided.
         """
         
+        # Validation
+        if not isinstance(blocks, list):
+            raise ValueError("blocks must be a list")
+        
         main_content_html = ""
         
         # Iterate through the blocks and build HTML linearly
@@ -39,7 +43,11 @@ class PressRoom:
                 items = [line.strip() for line in content.split('\n') if line.strip()]
                 if items:
                     list_items = "".join([f"<li>{item}</li>" for item in items])
-                    main_content_html += f'<ul class="bullet-list">{list_items}</ul>'
+                    main_content_html += f'''
+                    <div class="bullet-highlight">
+                        <ul class="bullet-list">{list_items}</ul>
+                    </div>
+                    '''
                 
             elif b_type == "grey_box":
                 # Render the grouped Media/Quote/Name block (The Sidebar Style)
@@ -117,6 +125,9 @@ class PressRoom:
             <div class="footer-bar">
                 <div class="footer-logo">{footer_logo_svg}</div>
                 <div class="footer-social">
+                    <a href="https://www.linkedin.com/in/alex-baddeley/" target="_blank" aria-label="LinkedIn">
+                        <svg viewBox="0 0 24 24"><path d="M4.98 3.5C4.98 4.88 3.88 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM0 8h5v16H0V8zm8.5 0h4.8v2.2h.07c.67-1.27 2.3-2.6 4.73-2.6 5.06 0 6 3.33 6 7.66V24h-5v-7.3c0-1.74-.03-3.98-2.43-3.98-2.43 0-2.8 1.9-2.8 3.86V24h-5V8z"/></svg>
+                    </a>
                     <a href="https://x.com/evostables" target="_blank" aria-label="X">
                         <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                     </a>
@@ -195,7 +206,7 @@ class PressRoom:
             color: #222; 
             margin-bottom: 24px;
             text-align: justify;
-            hyphens: auto;
+            hyphens: none;
         }
         
         /* CONTENT (Spread look) */
@@ -206,9 +217,9 @@ class PressRoom:
             color: #1a1a1a; 
             margin-bottom: 16px;
             text-align: justify;
-            hyphens: auto;
+            hyphens: none;
         }
-        .content p { margin-bottom: 1.5em; }
+        .content p { margin-bottom: 2em; }
         /* Only apply drop cap to the VERY first paragraph of the main content area if it appears first */
         .content:first-of-type p:first-of-type::first-letter {
             font-family: 'Playfair Display', serif; font-size: 3.8em; font-weight: 300;
@@ -216,18 +227,33 @@ class PressRoom:
         }
         
         /* BULLET LISTS */
-        .bullet-list {
-            font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6;
-            color: #1a1a1a; margin: 0 0 24px 16px; padding-left: 0;
-            text-align: left; /* Bullets look best left-aligned */
+        .bullet-highlight {
+            background: #000000;
+            color: #ffffff;
+            padding: 28px 24px;
+            border-left: 3px solid #d4a964;
+            margin: 24px 0;
         }
-        .bullet-list li { margin-bottom: 8px; padding-left: 8px; }
-        .bullet-list li::marker { color: #000000; font-size: 1.2em; }
+        .bullet-list {
+            font-family: 'Inter', sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            line-height: 1.5;
+            color: #ffffff;
+            list-style: disc;
+            margin: 0;
+            padding-left: 22px;
+            text-align: left;
+        }
+        .bullet-list li { margin-bottom: 10px; }
+        .bullet-list li:last-child { margin-bottom: 0; }
+        .bullet-list li::marker { color: #ffffff; font-size: 1em; }
         
         /* SIDEBAR (Quote/Media/Name Block) */
         .quote-sidebar {
-            background: #f9f9f9; padding: 32px 24px;
-            border-left: 2px solid #000000;
+            background: #fafafa; 
+            padding: 32px 24px;
+            border-left: 3px solid #d4a964; /* Gold accent, slightly thicker */
             display: flex; flex-direction: column; gap: 24px;
             margin: 24px 0;
         }
@@ -250,12 +276,12 @@ class PressRoom:
         
         /* MEDIA CONTAINERS */
         .media-container-landscape {
-            position: relative; width: 100%; margin: 0 auto; border-radius: 2px;
+            position: relative; width: 100%; margin: 0 auto; border-radius: 8px;
             overflow: hidden; aspect-ratio: 16/9;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         .media-container-portrait {
-            position: relative; width: 100%; margin: 0 auto; border-radius: 2px;
+            position: relative; width: 100%; margin: 0 auto; border-radius: 8px;
             overflow: hidden; aspect-ratio: 9/16;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
@@ -270,7 +296,7 @@ class PressRoom:
             gap: 32px; text-align: center;
         }
         .footer-hero h2 {
-            font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 400;
+            font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 400;
             color: #fff; margin: 0 0 14px 0;
         }
         .footer-hero .highlight-ownership {
@@ -283,7 +309,7 @@ class PressRoom:
         }
         .footer-bar {
             display: flex; justify-content: space-between; align-items: center;
-            padding-top: 26px; border-top: 1px solid #333;
+            padding-top: 26px;
         }
         .footer-logo {
             display: flex;
@@ -292,21 +318,28 @@ class PressRoom:
         .footer-logo svg {
             width: 16px;
             height: 16px;
-            fill: #666;
+            fill: #d4a964;
             display: block;
         }
         .footer-social { display: flex; gap: 12px; }
-        .footer-social svg { width: 16px; height: 16px; fill: #666; }
+        .footer-social svg { width: 16px; height: 16px; fill: #d4a964; }
         """
 
     def _format_body_paragraphs(self, paragraphs: str) -> str:
-        """Accept raw text and split into paragraphs for the content block."""
+        """Accept raw text, apply basic markdown, and split into paragraphs."""
         if not paragraphs:
             return ""
-        # If it's already a list-like string, keep behaviour simple: split by double newlines
-        parts = [p.strip() for p in paragraphs.split("\n\n") if p.strip()]
+        
+        # Basic markdown support
+        def apply_markdown(text):
+            text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)  # **bold**
+            text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)  # *italic*
+            return text
+        
+        parts = [apply_markdown(p.strip()) for p in paragraphs.split("\n\n") if p.strip()]
         if not parts:
             return ""
+        
         html = '<div class="content">'
         for para in parts:
             html += f'<p>{para}</p>'
@@ -314,28 +347,44 @@ class PressRoom:
         return html
 
     def _process_media(self, media_input: str, is_portrait: bool = False) -> Optional[str]:
-        if not media_input or not media_input.strip(): return None
+        if not media_input or not media_input.strip(): 
+            return None
+        
         media_input = media_input.strip()
         container_class = "media-container-portrait" if is_portrait else "media-container-landscape"
 
+        # Handle existing iframes
         if "<iframe" in media_input:
             match = re.search(r"<iframe[^>]*>.*?</iframe>", media_input, re.DOTALL)
             if match:
                 return f'<div class="{container_class}">{match.group(0)}</div>'
         
-        # Simple Logic: If it's a Canva link, build the iframe
-        if "canva.com/design" in media_input:
-            # Basic extraction - in prod might need more regex if URL varies
+        # YouTube handling
+        if "youtube.com" in media_input or "youtu.be" in media_input:
             try:
-                # remove query params for clean ID extraction
+                video_id = None
+                if "youtu.be/" in media_input:
+                    video_id = media_input.split("youtu.be/")[1].split("?")[0]
+                elif "watch?v=" in media_input:
+                    video_id = media_input.split("watch?v=")[1].split("&")[0]
+                
+                if video_id:
+                    return f'''<div class="{container_class}">
+                        <iframe src="https://www.youtube.com/embed/{video_id}" 
+                                frameborder="0" allowfullscreen loading="lazy"></iframe>
+                    </div>'''
+            except Exception:
+                return None
+        
+        # Canva handling
+        if "canva.com/design" in media_input:
+            try:
                 base = media_input.split('?')[0]
-                return f"""<div class="{container_class}">
-                    <iframe loading="lazy" src="{base}?embed" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
-                </div>"""
-            except: pass
+                return f'''<div class="{container_class}">
+                    <iframe loading="lazy" src="{base}?embed" 
+                            allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
+                </div>'''
+            except Exception:
+                return None
 
-        return None # Fallback
-    
-    def _to_paragraphs(self, raw_text: str) -> List[str]:
-        if not raw_text: return []
-        return [p.strip() for p in raw_text.split('\n\n') if p.strip()]
+        return None
