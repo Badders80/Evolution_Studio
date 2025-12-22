@@ -1,0 +1,46 @@
+/* Expands the table to full width */
+.change-list #changelist.filtered {
+    display: block;
+}
+.change-list #changelist.filtered #changelist-form {
+    width: 100%;
+    margin-right: 0;
+}
+/* Let results and controls use full width */
+.change-list #changelist {
+    width: 100%;
+    box-sizing: border-box;
+}
+.change-list #changelist-form,
+.change-list #changelist-form .results,
+.change-list #changelist-form .actions {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.change-list #changelist-form .results table {
+    width: 100%;
+}
+
+/* Moves the filter sidebar to the footer area */
+.change-list #changelist #changelist-filter {
+    position: static;
+    width: 100%;
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    background: #f8f8f8;
+    border: 1px solid #ccc;
+    padding: 15px;
+}
+.change-list #changelist #changelist-filter h3 {
+    padding-right: 20px;
+}
+.change-list #changelist #changelist-filter ul {
+    display: inline-flex;
+    margin-right: 30px;
+}
+.change-list #changelist #changelist-filter li {
+    list-style: none;
+    padding-right: 15px;
+}

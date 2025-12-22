@@ -1,6 +1,9 @@
+import os
+from datetime import date
 import streamlit as st
 import streamlit.components.v1 as components
 from modules.press_room import PressRoom
+from pathlib import Path
 import uuid
 import env  # noqa: F401  # Validate required environment variables at startup.
 
@@ -124,6 +127,121 @@ def parse_and_order_content(text):
             blocks.append(grey_box)
             
     return blocks
+
+
+def _ensure_django():
+    if not os.environ.get("DJANGO_SETTINGS_MODULE"):
+        os.environ["DJANGO_SETTINGS_MODULE"] = "evolution_studio_web.settings"
+    import django  # pylint: disable=import-outside-toplevel
+    from django.apps import apps  # pylint: disable=import-outside-toplevel
+    if not apps.ready:
+        django.setup()
+
+
+def _unique_slug(base_slug: str) -> str:
+    from django.utils.text import slugify  # pylint: disable=import-outside-toplevel
+    from studio_content.models import Update  # pylint: disable=import-outside-toplevel
+
+    slug = slugify(base_slug) or "update"
+    candidate = slug
+    suffix = 2
+    while Update.objects.filter(slug=candidate).exists():
+        candidate = f"{slug}-{suffix}"
+        suffix += 1
+    return candidate
+
+
+def save_update_to_library(blocks, update_type, html):
+    _ensure_django()
+    from django.db import transaction  # pylint: disable=import-outside-toplevel
+    from studio_content.models import ContentBlock, MediaAsset, Update  # pylint: disable=import-outside-toplevel
+
+    title = "Untitled Update"
+    for block in blocks:
+        if block.get("type") == "heading" and block.get("content"):
+            title = block["content"].strip()
+            break
+
+    type_map = {
+        "Trainer Update": Update.UpdateType.TRAINER_UPDATE,
+        "Race Preview": Update.UpdateType.RACE_PREVIEW,
+        "Race Result": Update.UpdateType.RACE_RESULT,
+    }
+    update_type_value = type_map.get(update_type, Update.UpdateType.TRAINER_UPDATE)
+
+    with transaction.atomic():
+        update = Update.objects.create(
+            title=title,
+            slug=_unique_slug(title),
+            update_type=update_type_value,
+            status=Update.Status.DRAFT,
+            rendered_html=html,
+        )
+
+        for idx, block in enumerate(blocks):
+            b_type = block.get("type")
+            if not b_type:
+                continue
+
+            media_obj = None
+            media_url = block.get("media", "").strip()
+            if media_url:
+                media_obj = MediaAsset.objects.create(
+                    name=f"{title} media {idx + 1}",
+                    kind=MediaAsset.Kind.EMBED,
+                    url=media_url,
+                    is_finished=False,
+                )
+
+            if b_type == "bullets":
+                ContentBlock.objects.create(
+                    update=update,
+                    order=idx,
+                    block_type=ContentBlock.BlockType.BULLETS,
+                    bullets=block.get("content", ""),
+                )
+            elif b_type == "heading":
+                ContentBlock.objects.create(
+                    update=update,
+                    order=idx,
+                    block_type=ContentBlock.BlockType.HEADING,
+                    text=block.get("content", ""),
+                )
+            elif b_type == "subheading":
+                ContentBlock.objects.create(
+                    update=update,
+                    order=idx,
+                    block_type=ContentBlock.BlockType.SUBHEADING,
+                    text=block.get("content", ""),
+                )
+            elif b_type == "body":
+                ContentBlock.objects.create(
+                    update=update,
+                    order=idx,
+                    block_type=ContentBlock.BlockType.BODY,
+                    text=block.get("content", ""),
+                )
+            elif b_type == "grey_box":
+                ContentBlock.objects.create(
+                    update=update,
+                    order=idx,
+                    block_type=ContentBlock.BlockType.GREY_BOX,
+                    media=media_obj,
+                    quote=block.get("quote", ""),
+                    name=block.get("name", ""),
+                    media_portrait=bool(block.get("media_portrait", True)),
+                )
+
+        MediaAsset.objects.create(
+            name=title,
+            kind=MediaAsset.Kind.EMBED,
+            source_update=update,
+            published_date=date.today(),
+            public_url="",
+            is_finished=True,
+        )
+
+    return update
 
 # --- LAYOUT ---
 col1, col2 = st.columns([1.2, 1])
@@ -296,3 +414,14 @@ with col2:
             use_container_width=True,
         ):
             st.rerun()
+
+    if st.button("✅ Save to Library", use_container_width=True):
+        try:
+            saved_update = save_update_to_library(
+                blocks=st.session_state.get("blocks", []),
+                update_type=update_type,
+                html=html,
+            )
+            st.success(f"Saved to library: {saved_update.title}")
+        except Exception as exc:
+            st.error(f"Save failed: {exc}")

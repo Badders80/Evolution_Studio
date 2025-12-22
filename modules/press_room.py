@@ -57,7 +57,7 @@ class PressRoom:
                     media_html = self._process_media(block["media"], is_portrait) or ""
                 
                 quote_html = (
-                    f'<blockquote><span class="quote-mark">“</span>{block["quote"]}<span class="quote-mark">”</span></blockquote>'
+                    f'<blockquote><span class="quote-mark">“</span>--{block["quote"]}--<span class="quote-mark">”</span></blockquote>'
                     if block.get("quote")
                     else ""
                 )
@@ -97,7 +97,7 @@ class PressRoom:
     <meta name="robots" content="noindex, nofollow" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,300;0,400;0,600;1,400&family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <style>
         {self._get_styles()}
     </style>
@@ -258,8 +258,15 @@ class PressRoom:
             margin: 24px 0;
         }
         .quote-sidebar blockquote {
-            font-family: 'Playfair Display', serif; font-size: 22px; font-style: italic;
-            line-height: 1.6; color: #000; margin: 0; font-weight: 500; text-align: left;
+            font-family: 'Geist Sans', sans-serif;
+            font-size: 20px;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 1.7;
+            color: #000;
+            margin: 0;
+            text-align: left;
+            letter-spacing: -0.01em;
         }
         .quote-sidebar cite {
             font-family: 'Inter', sans-serif; font-size: 11px; font-style: normal;
