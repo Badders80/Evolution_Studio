@@ -154,6 +154,7 @@ def _unique_slug(base_slug: str) -> str:
 def save_update_to_library(blocks, update_type, html):
     _ensure_django()
     from django.db import transaction  # pylint: disable=import-outside-toplevel
+    from django.utils.text import slugify  # pylint: disable=import-outside-toplevel
     from studio_content.models import ContentBlock, MediaAsset, Update  # pylint: disable=import-outside-toplevel
 
     title = "Untitled Update"
@@ -170,12 +171,19 @@ def save_update_to_library(blocks, update_type, html):
     update_type_value = type_map.get(update_type, Update.UpdateType.TRAINER_UPDATE)
 
     with transaction.atomic():
+        date_str = date.today().strftime("%d%b%Y")
+        url_title = slugify(title).replace("-", " ").title().replace(" ", "-")
+        filename = f"{url_title}-{date_str}.html"
+        final_url = f"https://www.evolutionstables.nz/updates/{filename}"
+
         update = Update.objects.create(
             title=title,
             slug=_unique_slug(title),
             update_type=update_type_value,
             status=Update.Status.DRAFT,
             rendered_html=html,
+            published_date=date.today(),
+            public_url=final_url,
         )
 
         for idx, block in enumerate(blocks):

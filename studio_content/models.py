@@ -81,8 +81,8 @@ class Update(models.Model):
         return self.title
 
     class Meta:
-        verbose_name = "Content Blocks"
-        verbose_name_plural = "Content Blocks"
+        verbose_name = "Content Library"
+        verbose_name_plural = "Content Library"
 
 
 class ContentBlock(models.Model):
