@@ -3,3 +3,18 @@ __pycache__/
 .env
 .DS_Store
 .env.local
+
+# Ignore Python Virtual Environments
+.venv/
+venv/
+env/
+
+# Ignore massive AI models (Evolution Studio Rule #2)
+models/
+*.safetensors
+*.gguf
+
+# Ignore local databases and temporary files
+db.sqlite3
+__pycache__/
+.DS_Store
