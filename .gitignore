@@ -1,20 +1,13 @@
-venv/
-__pycache__/
+# Secrets
 .env
-.DS_Store
-.env.local
+*.key
 
-# Ignore Python Virtual Environments
-.venv/
-venv/
-env/
+# Output
+*.mp4
+output/
 
-# Ignore massive AI models (Evolution Studio Rule #2)
-models/
-*.safetensors
-*.gguf
+# Logs
+*.log
 
-# Ignore local databases and temporary files
-db.sqlite3
-__pycache__/
-.DS_Store
+# IDE
+.vscode/
