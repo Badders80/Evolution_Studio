@@ -98,6 +98,11 @@ Blocks are rendered linearly with support for:
 - **Brand Voice**: `/home/evo/00_DNA/brand-identity/BRAND_VOICE.md`
 - **Workflows**: `/home/evo/00_DNA/workflows/`
 
+**Core Bible Documents**:
+1. `/home/evo/00_DNA/brand-identity/Evolution_Content_Factory.md` - Content Factory brand guidelines
+2. `/home/evo/00_DNA/brand-identity/Branding.md` - Q7 layer institutional voice
+3. `/home/evo/00_DNA/build-philosophy/Evolution_OS.md` - Technical architecture & operations manual
+
 **Key Files to Reference**:
 1. `/home/evo/00_DNA/AGENTS.core.md` - Universal agent rules
 2. `/home/evo/00_DNA/build-philosophy/Master_Config_2026.md` - Hardware and architecture specs
